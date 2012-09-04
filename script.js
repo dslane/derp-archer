@@ -14,10 +14,13 @@ var squares;
 var numSquares;
 var v0 = 10;
 var gravity = 9.8;
+var frequencyBound = 0.97;
 
 var intervalId;
 var timerDelay = 100;
 var score = 0;
+var levelInterval = 10;
+var levelUp = score + levelInterval;
 var misses = 10;
 var scoreText;
 var missesText;
@@ -126,6 +129,12 @@ function onTimer() {
 	moveSquares();
 	drawThings();
 
+	//Increase frequency if score is high enough
+	if (score >= levelUp){
+		frequencyBound -= 0.1;
+		levelUp += levelInterval;
+	}
+
 	if (colorAlterTimer > 0) {
 		colorAlterTimer -= .1
 		console.log(colorAlterTimer);
@@ -134,18 +143,37 @@ function onTimer() {
 		rightColor = orange;
 	}
 
-	if (Math.random() * 1 > .9) {
-		var num = Math.ceil(Math.random() * 2);
+	//Generate squares
+	if (Math.random() > frequencyBound) {
+		var num = Math.ceil(Math.random() * 10);
 		var color;
 
-		if (colorAlterTimer > 0)
+		if (colorAlterTimer > 0){
 			color = alterColor;
-		else if (1 === num)
-			color = leftColor;
-		else
-			color = rightColor;
+			squares.push(new Square(color));
+		}
+		else if ((1 <= num) && (9 >= num)){
+			if (4 >= num){
+				color = leftColor;
+			}
+			else{
+				color = rightColor;
+			}
+			console.log(color);
+			squares.push(new Square(color));
+		}
+		else{
+			if (Math.random() < 0.5){
+				color = leftColor;
+			}
+			else{
+				color = rightColor;
+			}
+			squares.push(new ColorAlterSquare(color));
+		}
 
-		squares.push(new Square(color));
+
+		
 	}
 }
 
@@ -249,6 +277,7 @@ function checkBounces() {
 
 					if (square.hasBounced && square.v0 > -10) { //EXPLOOOOOOOODE!!!!!!!!
 						squares.splice(i, 1);
+						score--;
 					}
 					timeFloor = Math.floor(sysTime - square.t0 - 2);
 					if (!square.hasBounced)
@@ -311,6 +340,6 @@ canvas.addEventListener('mouseup', onMouseUp, false);
 canvas.addEventListener('mousedown', onMouseDown, false);
 
 drawPillar(center);
-squares = [new Square(leftColor, 10), new Square(rightColor, 10), new ColorAlterSquare(rightColor)];
+squares = [new Square(leftColor, 10)];
 numSquares = 2;
 intervalId = setInterval(onTimer, timerDelay);
