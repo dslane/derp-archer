@@ -7,7 +7,7 @@ var sysTime = 0;
 var purple = "#c267ff";
 var orange = "#de3500";
 var squareSide = 10;
-
+//blaaaaah
 var squares;
 var numSquares;
 var v0 = 10;
