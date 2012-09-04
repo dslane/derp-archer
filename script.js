@@ -7,12 +7,8 @@ var sysTime = 0;
 var purple = "#c267ff";
 var orange = "#de3500";
 
-<<<<<<< HEAD
-
-=======
 var leftColor = purple;
 var rightColor = orange;
->>>>>>> Added the beginnings of a new square type
 
 var squares;
 var numSquares;
@@ -190,9 +186,7 @@ function checkBounces() {
 				if (sRight <= center && square.color === leftColor) { //Absorb
 					console.log("absorb: " + square.toString());
 					squares.splice(i, 1);
-<<<<<<< HEAD
 					score++;
-=======
 					if (square.type === "CAS") {
 						rightColor = leftColor;
 					}
@@ -203,7 +197,6 @@ function checkBounces() {
 					if (square.type === "CAS") {
 						leftColor === rightColor;
 					}
->>>>>>> Added the beginnings of a new square type
 				}
 				else if (leftColor === rightColor === square.color) { //Absorb
 					console.log("absorb: " + square.toString());
