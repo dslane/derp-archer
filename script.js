@@ -7,6 +7,8 @@ var sysTime = 0;
 var purple = "#c267ff";
 var orange = "#de3500";
 
+
+
 var squares;
 var numSquares;
 var v0 = 10;
@@ -14,6 +16,11 @@ var gravity = 9.8;
 
 var intervalId;
 var timerDelay = 100;
+var score = 0;
+var misses = 10;
+var scoreText;
+var missesText;
+var fontHeight = 30;
 
 function fSquare(color, sideLength, velocity) {
 	if (undefined === color)
@@ -110,6 +117,32 @@ function onTimer() {
 	}
 }
 
+/* Function to display score and remaining misses */
+function drawText(){
+	ctx.font = "20px Arial";
+	ctx.textAlign = "right";
+	ctx.textBaseline = "top";
+	ctx.fillStyle = "green";
+
+	/* Construct the score text, and write it on the canvas */
+	scoreText = "Score: " + score;
+	ctx.fillText(scoreText, canvas.width, 0);
+
+	/* Do the same for the misses */
+	missesText = "Misses: " + misses;
+	ctx.fillText(missesText, canvas.width, fontHeight);
+}
+
+function clearText(){
+	scoreWidth = ctx.measureText(scoreText).width;
+	missesWidth = ctx.measureText(missesText).width;
+	height = fontHeight;
+
+	ctx.clearRect(canvas.width - scoreWidth, 0, scoreWidth, height);
+	ctx.clearRect(canvas.width - missesWidth, height, missesWidth, height);
+
+}
+
 function moveSquares() {
 	clearPillar(center);
 	squares.forEach(function(fSquare) {
@@ -135,10 +168,12 @@ function checkBounces() {
 				if (sRight <= center && fSquare.color === purple) { //Absorb
 					console.log("absorb: " + fSquare.toString());
 					squares.splice(i, 1);
+					score++;
 				}
 				else if (sLeft >= center && fSquare.color === orange) { //Absorb
 					console.log("absorb: " + fSquare.toString());
 					squares.splice(i, 1);
+					score++;
 				}
 				else { //Bounce
 					console.log("bounce: " + fSquare.toString());
@@ -160,6 +195,7 @@ function checkBounces() {
 		}
 		else if (sTop >= canvas.height) { //Missed the platform
 			squares.splice(i, 1);
+			misses--;
 		}
 	}
 }
@@ -169,6 +205,7 @@ function clearThings (fSquare) {
 		fSquare.clear();
 	})
 	clearPillar(center);
+	clearText();
 };
 
 function drawThings (fSquare) {
@@ -176,6 +213,7 @@ function drawThings (fSquare) {
 		fSquare.draw();
 	})
 	drawPillar(center);
+	drawText();
 }
 
 canvas.onmousemove = function (event) {
