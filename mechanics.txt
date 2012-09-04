@@ -1,0 +1,14 @@
+game mechanics:
+
+blow up on stop bouncing
+
+falling in horizontal direction
+
+powerups/downs:
+	Smaller paddle
+	Larger paddle
+	checkerboarded paddle (harder to catch)
+	invisible (can only catch, not bounce)
+	point boost/color boost
+	point values for sizes
+	
