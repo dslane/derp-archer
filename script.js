@@ -15,7 +15,7 @@ var gravity = 9.8;
 var intervalId;
 var timerDelay = 100;
 
-function Square(color, sideLength, velocity) {
+function fSquare(color, sideLength, velocity) {
 	if (undefined === color)
 		this.color = "#FFFFFF";
 	else
@@ -40,11 +40,11 @@ function Square(color, sideLength, velocity) {
 	this.hasBounced = false;
 }
 
-Square.prototype.toString = function() {
-	return "Square<(" + this.x + "," + this.y + ") color: " + this.color + " sideLength: " + this.sideLength + ">";
+fSquare.prototype.toString = function() {
+	return "fSquare<(" + this.x + "," + this.y + ") color: " + this.color + " sideLength: " + this.sideLength + ">";
 }
 
-Square.prototype.draw = function() {
+fSquare.prototype.draw = function() {
 	var sLeft = this.x - this.sideLength / 2;
 	var sTop = this.y - this.sideLength / 2;
 
@@ -52,14 +52,14 @@ Square.prototype.draw = function() {
 	ctx.fillRect(sLeft, sTop, this.sideLength, this.sideLength);
 };
 
-Square.prototype.clear = function() {
+fSquare.prototype.clear = function() {
 	var sLeft = this.x - this.sideLength / 2;
 	var sTop = this.y - this.sideLength / 2;
 
 	ctx.clearRect(sLeft, sTop, this.sideLength, this.sideLength);
 };
 
-Square.prototype.move = function() {
+fSquare.prototype.move = function() {
 	var time = sysTime - this.t0;
 	var newY = this.y0 + this.v0 * time + .5 * this.a * time * time;
 	this.y = newY;
@@ -73,7 +73,7 @@ function drawPillar(center) {
 	ctx.fillRect(center, canvas.height - 10, canvas.width / 4, 10);
 
 	ctx.fillStyle = "black"
-	ctx.fillRect(center - 10, canvas.height - 20, 20, 10);
+	ctx.fillRect(center - 10, canvas.height - 15, 20, 5);
 }
 
 function clearPillar(center) {
@@ -106,24 +106,24 @@ function onTimer() {
 			sColor = orange;
 		else
 			sColor = purple;
-		squares.push(new Square(sColor));
+		squares.push(new fSquare(sColor));
 	}
 }
 
 function moveSquares() {
 	clearPillar(center);
-	squares.forEach(function(square) {
-		square.move();
+	squares.forEach(function(fSquare) {
+		fSquare.move();
 	});
 }
 
 function checkBounces() {
 	for (var i = 0; i < squares.length; i++) {
-		var square = squares[i];
-		var sBottom = square.y + square.sideLength / 2;
-		var sTop = square.y - square.sideLength / 2;
-		var sRight = square.x + square.sideLength / 2;
-		var sLeft = square.x - square.sideLength / 2;
+		var fSquare = squares[i];
+		var sBottom = fSquare.y + fSquare.sideLength / 2;
+		var sTop = fSquare.y - fSquare.sideLength / 2;
+		var sRight = fSquare.x + fSquare.sideLength / 2;
+		var sLeft = fSquare.x - fSquare.sideLength / 2;
 		var baseLeft = center - canvas.width / 4;
 		var baseRight = center + canvas.width / 4;
 		var baseTop = canvas.height - 10;
@@ -131,27 +131,30 @@ function checkBounces() {
 		var timeFloor;
 
 		if (sLeft < baseRight && sRight > baseLeft) {
-			if (sBottom >= baseTop && square.v0 >= 0) { //Hit the platform
-				if (sRight <= center && square.color === purple) { //Absorb
+			if (sBottom >= baseTop) { //Hit the platform
+				if (sRight <= center && fSquare.color === purple) { //Absorb
+					console.log("absorb: " + fSquare.toString());
 					squares.splice(i, 1);
 				}
-				else if (sLeft >= center && square.color === orange) { //Absorb
+				else if (sLeft >= center && fSquare.color === orange) { //Absorb
+					console.log("absorb: " + fSquare.toString());
 					squares.splice(i, 1);
 				}
 				else { //Bounce
-					timeFloor = Math.floor(sysTime - square.t0 - 2);
-					if (!square.hasBounced)
-						square.v0 += (square.a * timeFloor);
+					console.log("bounce: " + fSquare.toString());
+					timeFloor = Math.floor(sysTime - fSquare.t0 - 2);
+					if (!fSquare.hasBounced)
+						fSquare.v0 += (fSquare.a * timeFloor);
 					else {
-						timeUp = (-1 * square.v0) / square.a
-						square.v0 = square.a * (tf - timeUp);
+						timeUp = (-1 * fSquare.v0) / fSquare.a
+						fSquare.v0 = fSquare.a * (timeFloor - timeUp);
 					}
-					square.v0 = Math.floor(square.v0);
-					square.v0 *= -1;
-					console.log("v0 down: "  + square.v0 + "\tt0 down: " + square.t0 + "\t\nsystime: " + sysTime + "\ttimeUp: " + timeUp);
-					square.y0 = baseTop - square.sideLength / 2;
-					square.t0 = sysTime;
-					square.hasBounced = true;
+					fSquare.v0 = Math.floor(fSquare.v0);
+					fSquare.v0 *= -1;
+					console.log("v0 down: "  + fSquare.v0 + "\tt0 down: " + fSquare.t0 + "\t\nsystime: " + sysTime + "\ttimeUp: " + timeUp);
+					fSquare.y0 = baseTop - fSquare.sideLength / 2 - 1;
+					fSquare.t0 = sysTime;
+					fSquare.hasBounced = true;
 				}
 			}
 		}
@@ -161,16 +164,16 @@ function checkBounces() {
 	}
 }
 
-function clearThings (square) {
-	squares.forEach(function(square) {
-		square.clear();
+function clearThings (fSquare) {
+	squares.forEach(function(fSquare) {
+		fSquare.clear();
 	})
 	clearPillar(center);
 };
 
-function drawThings (square) {
-	squares.forEach(function (square) {
-		square.draw();
+function drawThings (fSquare) {
+	squares.forEach(function (fSquare) {
+		fSquare.draw();
 	})
 	drawPillar(center);
 }
@@ -188,6 +191,6 @@ canvas.addEventListener('mouseup', onMouseUp, false);
 canvas.addEventListener('mousedown', onMouseDown, false);
 
 drawPillar(center);
-squares = [new Square(purple, 10), new Square(orange, 10)];
+squares = [new fSquare(purple, 10), new fSquare(orange, 10)];
 numSquares = 2;
 intervalId = setInterval(onTimer, timerDelay);
