@@ -11,8 +11,7 @@ var leftColor = purple;
 var rightColor = orange;
 
 var squares;
-var numSquares;
-var v0 = 10;
+var platform;
 var gravity = 9.8;
 
 var intervalId;
@@ -26,65 +25,137 @@ var fontHeight = 30;
 var colorAlterTimer = 0;
 var alterColor;
 
-function Square(color, sideLength, velocity) {
-	if (undefined === color)
-		this.color = "#000000";
-	else
+function Drawable(color, x, y, width, height) {
+	if (undefined != color)
 		this.color = color;
-
-	if (undefined === sideLength)
-		this.sideLength = 10;
-	else
-		this.sideLength = sideLength;
-
-	if (undefined === velocity)
-		this.v0 = v0;
-	else
-		this.v0 = velocity;
-	
-	this.a = gravity;
-	this.t0 = sysTime;
-	this.y0 = 0;
-
-	this.x = Math.random() * canvas.width;
-	this.y = this.y0;
-	this.hasBounced = false;
-
-	this.type = "Plain";
+	if (undefined != x)
+		this.x = x;
+	if (undefined != y)
+		this.y = y;
+	if (undefined != width)
+		this.width = width;
+	if (undefined != height)
+		this.height = height;
 }
 
-Square.prototype.toString = function() {
-	return "Square<(" + this.x + "," + this.y + ") color: " + this.color + " sideLength: " + this.sideLength + ">";
-}
+Drawable.prototype.color = "black";
+Drawable.prototype.x = 0;
+Drawable.prototype.y = 0;
+Drawable.prototype.width = 2;
+Drawable.prototype.height = 2;
 
-Square.prototype.draw = function() {
-	var sLeft = this.x - this.sideLength / 2;
-	var sTop = this.y - this.sideLength / 2;
-
+Drawable.prototype.draw = function() {
 	ctx.fillStyle = this.color;
-	ctx.fillRect(sLeft, sTop, this.sideLength, this.sideLength);
-};
+	ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+}
 
-Square.prototype.clear = function() {
-	var sLeft = this.x - this.sideLength / 2;
-	var sTop = this.y - this.sideLength / 2;
+Drawable.prototype.clear = function() {
+	ctx.clearRect(this.x - this.width / 2 - 1, this.y - this.height/2 - 1, this.width + 2, this.height + 2);
+}
 
-	ctx.clearRect(sLeft - 1, sTop - 1, this.sideLength + 2, this.sideLength + 2);
-};
+Drawable.prototype.toString = function() {
+	var origin = "(" + this.x + "," + this.y + ") ";
+	var width = "width: " + this.width + " ";
+	var height = "height: " + this.height + " ";
+	var color = "color " + this.color + " ";
+	return "Faller<" + origin + width + color + ">";
+}
 
-Square.prototype.move = function() {
+function Platform(leftColor, rightColor, center, y, width, height) {
+	Drawable.call(this, undefined, center - width / 2, y, width, height);
+
+	this.leftColor = leftColor;
+	this.rightColor = rightColor;
+	this.center = center;
+	this.color = undefined;
+}
+
+Platform.prototype = new Drawable();
+Platform.prototype.constructor = Platform;
+Platform.prototype.leftColor = "black";
+Platform.prototype.rightColor = "black";
+
+Platform.prototype.draw = function() {
+	ctx.fillStyle = this.leftColor;
+	ctx.fillRect(this.x, this.y, this.width / 2, this.height);
+
+	ctx.fillStyle = this.rightColor;
+	ctx.fillRect(this.center, this.y, this.width / 2, this.height);
+
+	ctx.fillStyle = "black"
+	ctx.fillRect(this.center - 10, canvas.height - 15, 20, 5);
+}
+
+Platform.prototype.clear = function() {
+	ctx.clearRect(this.x, this.y, this.width, this.height);
+	ctx.clearRect(this.center - 10, canvas.height - 15, 20, 5);
+}
+
+Platform.prototype.toString = function() {
+	var origin = "(" + this.x + "," + this.y + ") ";
+	var center = "center: " + this.center + " ";
+	var width = "width: " + this.width + " ";
+	var height = "height: " + this.height + " ";
+	return "Platform<" + origin + center + width + height + ">";
+}
+
+function Faller(color, x, y, width, height, y0, v0, a) {
+	Drawable.call(this, color, x, y, width, height);
+	if (undefined != y0)
+		this.y0 = y0
+	if (undefined != v0)
+		this.v0 = v0;
+	if (undefined != a)
+		this.a = a;
+
+	this.t0 = sysTime;
+}
+
+Faller.prototype = new Drawable();
+Faller.prototype.constructor = Faller;
+Faller.prototype.y0 = 0;
+Faller.prototype.v0 = 0;
+Faller.prototype.a = gravity;
+
+Faller.prototype.fall = function() {
 	var time = sysTime - this.t0;
 	var newY = this.y0 + this.v0 * time + .5 * this.a * time * time;
 	this.y = newY;
 }
 
-function ColorAlterSquare(color, sideLength, velocity) {
-	Square.call(this, color, sideLength, velocity);
-	this.type = "CAS";
+Faller.prototype.toString = function() {
+	var origin = "(" + this.x + "," + this.y + ") ";
+	var width = "width: " + this.width + " ";
+	var height = "height: " + this.height + " ";
+	var color = "color " + this.color + " ";
+	var velocity = "initial velocity: " + this.v0 + " final velocity: " + this.v0 + 2 * this.a * (sysTime - this.t0) + " "
+	var acceleration = "acceleration: " + this.a;
+	return "Faller<" + origin + width + height + color + velocity + acceleration + ">";
+}
+
+function Square(color, x, sideLength, y0, v0, a) {
+	Faller.call(this, color, x, 0 - sideLength / 2, sideLength, sideLength, y0, v0, a);
+	this.hasBounced = false;
+	this.sideLength = sideLength;
+}
+
+Square.prototype = new Faller();
+Square.prototype.constructor = Square;
+
+Square.prototype.toString = function() {
+	var origin = "(" + this.x + "," + this.y + ") ";
+	var sideLength = "sideLength: " + this.sideLength + " ";
+	var color = "color " + this.color + " ";
+	var velocity = "initial velocity: " + this.v0 + " final velocity: " + this.v0 + 2 * this.a * (sysTime - this.t0) + " "
+	var acceleration = "acceleration: " + this.a;
+	return "Square<" + origin + sideLength + color + velocity + acceleration + ">";
+}
+
+function ColorAlterSquare(color, x, sideLength, y0, v0, a) {
+	Square.call(this, color, x, sideLength, y0, v0, a);
 }
 
 ColorAlterSquare.prototype = new Square();
-
 ColorAlterSquare.prototype.constructor = ColorAlterSquare;
 
 ColorAlterSquare.prototype.draw = function() {
@@ -103,14 +174,7 @@ ColorAlterSquare.prototype.toString = function() {
 }
 
 function drawPillar(center) {
-	ctx.fillStyle = leftColor;
-	ctx.fillRect(center - canvas.width / 4, canvas.height - 10, canvas.width / 4, 10);
 
-	ctx.fillStyle = rightColor;
-	ctx.fillRect(center, canvas.height - 10, canvas.width / 4, 10);
-
-	ctx.fillStyle = "black"
-	ctx.fillRect(center - 10, canvas.height - 15, 20, 5);
 }
 
 function clearPillar(center) {
@@ -136,6 +200,9 @@ function onTimer() {
 
 	if (Math.random() * 1 > .9) {
 		var num = Math.ceil(Math.random() * 2);
+		var x = Math.random() * canvas.width;
+		var size = Math.random() * 40;
+		var v0 = Math.random() * 20;
 		var color;
 
 		if (colorAlterTimer > 0)
@@ -145,7 +212,7 @@ function onTimer() {
 		else
 			color = rightColor;
 
-		squares.push(new Square(color));
+		squares.push(new Square(color, x, size, v0));
 	}
 }
 
@@ -177,8 +244,8 @@ function clearText(){
 
 function moveSquares() {
 	clearPillar(center);
-	squares.forEach(function(Square) {
-		Square.move();
+	squares.forEach(function(square) {
+		square.fall();
 	});
 }
 
@@ -189,19 +256,19 @@ function checkBounces() {
 		var sTop = square.y - square.sideLength / 2;
 		var sRight = square.x + square.sideLength / 2;
 		var sLeft = square.x - square.sideLength / 2;
-		var baseLeft = center - canvas.width / 4;
-		var baseRight = center + canvas.width / 4;
+		var baseLeft = platform.center - canvas.width / 4;
+		var baseRight = platform.center + canvas.width / 4;
 		var baseTop = canvas.height - 10;
 		var timeUp;
 		var timeFloor;
 
 		if (sLeft < baseRight && sRight > baseLeft) {
 			if (sBottom >= baseTop) { //Hit the platform
-				if (sRight <= center && square.color === leftColor) { //Absorb
+				if (sRight <= platform.center && square.color === leftColor) { //Absorb
 					console.log("absorb: " + square.toString());
 					squares.splice(i, 1);
 					score++;
-					if (square.type === "CAS") {
+					if (square instanceof ColorAlterSquare) {
 						colorAlterTimer = 5;
 						rightColor = leftColor;
 						alterColor = leftColor;
@@ -210,10 +277,10 @@ function checkBounces() {
 						});
 					}
 				}
-				else if (sLeft >= center && square.color === rightColor) { //Absorb
+				else if (sLeft >= platform.center && square.color === rightColor) { //Absorb
 					console.log("absorb: " + square.toString());
 					squares.splice(i, 1);
-					if (square.type === "CAS") {
+					if (square instanceof ColorAlterSquare) {
 						colorAlterTimer = 5;
 						leftColor = rightColor;
 						alterColor = rightColor;
@@ -230,7 +297,7 @@ function checkBounces() {
 				}
 				else { //Bounce
 					console.log("bounce: " + square.toString());
-					if (square.type === "CAS") {
+					if (square instanceof ColorAlterSquare) {
 						colorAlterTimer = 5;
 						squares.splice(i, 1);
 						if (square.color === leftColor) {
@@ -273,25 +340,25 @@ function checkBounces() {
 	}
 }
 
-function clearThings (Square) {
-	squares.forEach(function(Square) {
-		Square.clear();
+function clearThings () {
+	squares.forEach(function(square) {
+		square.clear();
 	})
-	clearPillar(center);
+	platform.clear();
 	clearText();
 };
 
-function drawThings (Square) {
-	squares.forEach(function (Square) {
-		Square.draw();
+function drawThings () {
+	squares.forEach(function (square) {
+		square.draw();
 	})
-	drawPillar(center);
+	platform.draw();
 	drawText();
 }
 
 function onMouseDown(event) {
     movePillar = true;
-    offset = event.pageX - center;
+    offset = event.pageX - platform.center;
 }
 
 function onMouseUp(event) {
@@ -301,7 +368,8 @@ function onMouseUp(event) {
 canvas.onmousemove = function (event) {
 	if (true === movePillar) {
 		clearThings();
-		center = event.pageX - offset;
+		platform.center = event.pageX - offset;
+		platform.x = platform.center - platform.width / 2;
 		drawThings();
 		//console.log("center is " + center + ": purple (" + (center - canvas.width / 4) + "," + center + ") ; orange (" + center + "," + (center + canvas.width / 4) + ")");
 	}
@@ -310,7 +378,6 @@ canvas.onmousemove = function (event) {
 canvas.addEventListener('mouseup', onMouseUp, false);
 canvas.addEventListener('mousedown', onMouseDown, false);
 
-drawPillar(center);
-squares = [new Square(leftColor, 10), new Square(rightColor, 10), new ColorAlterSquare(rightColor)];
-numSquares = 2;
+platform = new Platform(purple, orange, canvas.width / 2, canvas.height - 10, canvas.width / 2, 10);
+squares = [new Square(leftColor, canvas.width / 3, 10), new Square(rightColor, 2 * canvas.width / 3, 10), new ColorAlterSquare(rightColor, Math.random() * canvas.width, 15)];
 intervalId = setInterval(onTimer, timerDelay);
