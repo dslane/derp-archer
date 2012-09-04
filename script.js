@@ -208,39 +208,39 @@ function onTimer() {
 		colorAlterTimer -= .1
 		console.log(colorAlterTimer);
 	} else if (colorAlterTimer <= 0) {
-		leftColor = purple;
-		rightColor = orange;
+		platform.leftColor = purple;
+		platform.rightColor = orange;
 	}
 
 	//Generate squares
 	var gen = Math.random();
+	var color;
 	if (gen > frequencyBound) {
 		console.log(gen);
 		var num = Math.ceil(Math.random() * 10);
-		var color;
 
 		if (colorAlterTimer > 0){
 			color = alterColor;
-			squares.push(new Square(color));
+			squares.push(new Square(color, Math.random() * canvas.width, Math.random() * 40));
 		}
 		else if ((1 <= num) && (9 >= num)){
 			if (4 >= num){
-				color = leftColor;
+				color = platform.leftColor;
 			}
 			else{
-				color = rightColor;
+				color = platform.rightColor;
 			}
 			console.log(color);
-			squares.push(new Square(color));
+			squares.push(new Square(color, Math.random() * canvas.width, Math.random() * 40));
 		}
 		else{
 			if (Math.random() < 0.5){
-				color = leftColor;
+				color = platform.leftColor;
 			}
 			else{
-				color = rightColor;
+				color = platform.rightColor;
 			}
-			squares.push(new ColorAlterSquare(color));
+			squares.push(new ColorAlterSquare(color, Math.random() * canvas.width, Math.random() * 40));
 		}
 	}
 }
@@ -319,34 +319,34 @@ function checkBounces() {
 
 		if (sLeft < baseRight && sRight > baseLeft) {
 			if (sBottom >= baseTop) { //Hit the platform
-				if (sRight <= platform.center && square.color === leftColor) { //Absorb
+				if (sRight <= platform.center && square.color === platform.leftColor) { //Absorb
 					console.log("absorb: " + square.toString());
 					squares.splice(i, 1);
 					score++;
 					if (square instanceof ColorAlterSquare) {
 						colorAlterTimer = 5;
-						rightColor = leftColor;
-						alterColor = leftColor;
+						platform.rightColor = platform.leftColor;
+						alterColor = platform.leftColor;
 						squares.forEach(function(squareToChange) {
 							squareToChange.color = square.color;
 						});
 					}
 				}
-				else if (sLeft >= platform.center && square.color === rightColor) { //Absorb
+				else if (sLeft >= platform.center && square.color === platform.rightColor) { //Absorb
 					console.log("absorb: " + square.toString());
 					squares.splice(i, 1);
 					score++;
 					if (square instanceof ColorAlterSquare) {
 						colorAlterTimer = 5;
-						leftColor = rightColor;
-						alterColor = rightColor;
+						platform.leftColor = platform.rightColor;
+						alterColor = platform.rightColor;
 						squares.forEach(function(squareToChange) {
 							squareToChange.color = square.color;
 						});
 					}
 
 				}
-				else if (leftColor === rightColor && leftColor === square.color) { //Absorb
+				else if (platform.leftColor === platform.rightColor && platform.leftColor === square.color) { //Absorb
 					console.log("absorb: " + square.toString());
 					squares.splice(i, 1);
 					score++;
@@ -356,13 +356,13 @@ function checkBounces() {
 					if (square instanceof ColorAlterSquare) {
 						colorAlterTimer = 5;
 						squares.splice(i, 1);
-						if (square.color === leftColor) {
-							alterColor = leftColor;
-							leftColor = rightColor
+						if (square.color === platform.leftColor) {
+							alterColor = platform.leftColor;
+							platform.leftColor = platform.rightColor
 						}
 						else {
-							alterColor = rightColor;
-							rightColor = leftColor;
+							alterColor = platform.rightColor;
+							platform.rightColor = platform.leftColor;
 						}
 						squares.forEach(function(squareToChange) {
 							squareToChange.color = square.color;
