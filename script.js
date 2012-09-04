@@ -23,6 +23,9 @@ var scoreText;
 var missesText;
 var fontHeight = 30;
 
+var colorAlterTimer = 0;
+var alterColor;
+
 function Square(color, sideLength, velocity) {
 	if (undefined === color)
 		this.color = "#000000";
@@ -123,14 +126,25 @@ function onTimer() {
 	moveSquares();
 	drawThings();
 
+	if (colorAlterTimer > 0) {
+		colorAlterTimer -= .1
+		console.log(colorAlterTimer);
+	} else if (colorAlterTimer <= 0) {
+		leftColor = purple;
+		rightColor = orange;
+	}
+
 	if (Math.random() * 1 > .9) {
 		var num = Math.ceil(Math.random() * 2);
 		var color;
 
-		if (1 === num)
+		if (colorAlterTimer > 0)
+			color = alterColor;
+		else if (1 === num)
 			color = leftColor;
 		else
 			color = rightColor;
+
 		squares.push(new Square(color));
 	}
 }
@@ -188,23 +202,51 @@ function checkBounces() {
 					squares.splice(i, 1);
 					score++;
 					if (square.type === "CAS") {
+						colorAlterTimer = 5;
 						rightColor = leftColor;
+						alterColor = leftColor;
+						squares.forEach(function(squareToChange) {
+							squareToChange.color = square.color;
+						});
 					}
 				}
 				else if (sLeft >= center && square.color === rightColor) { //Absorb
 					console.log("absorb: " + square.toString());
 					squares.splice(i, 1);
 					if (square.type === "CAS") {
-						leftColor === rightColor;
+						colorAlterTimer = 5;
+						leftColor = rightColor;
+						alterColor = rightColor;
+						squares.forEach(function(squareToChange) {
+							squareToChange.color = square.color;
+						});
 					}
+
 				}
-				else if (leftColor === rightColor === square.color) { //Absorb
+				else if (leftColor === rightColor && leftColor === square.color) { //Absorb
 					console.log("absorb: " + square.toString());
 					squares.splice(i, 1);
 					score++;
 				}
 				else { //Bounce
 					console.log("bounce: " + square.toString());
+					if (square.type === "CAS") {
+						colorAlterTimer = 5;
+						squares.splice(i, 1);
+						if (square.color === leftColor) {
+							alterColor = leftColor;
+							leftColor = rightColor
+						}
+						else {
+							alterColor = rightColor;
+							rightColor = leftColor;
+						}
+						squares.forEach(function(squareToChange) {
+							squareToChange.color = square.color;
+						});
+						continue;
+					}
+
 					if (square.hasBounced && square.v0 > -10) { //EXPLOOOOOOOODE!!!!!!!!
 						squares.splice(i, 1);
 					}
@@ -269,6 +311,6 @@ canvas.addEventListener('mouseup', onMouseUp, false);
 canvas.addEventListener('mousedown', onMouseDown, false);
 
 drawPillar(center);
-squares = [new Square(leftColor, 10), new Square(rightColor, 10), new ColorAlterSquare(leftColor)];
+squares = [new Square(leftColor, 10), new Square(rightColor, 10), new ColorAlterSquare(rightColor)];
 numSquares = 2;
 intervalId = setInterval(onTimer, timerDelay);
