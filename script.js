@@ -13,10 +13,17 @@ var rightColor = orange;
 var squares;
 var platform;
 var gravity = 9.8;
+var frequencyBound = 0.965;
 
 var intervalId;
 var timerDelay = 100;
 var score = 0;
+var score = 0;
+var levelInterval = 10;
+var levelUp = score + levelInterval;
+var levelText = "Level Up!";
+var levelTextCtr = 0;
+var pingLevelUp = false;
 var misses = 10;
 var scoreText;
 var missesText;
@@ -190,6 +197,13 @@ function onTimer() {
 	moveSquares();
 	drawThings();
 
+	//Increase frequency if score is high enough
+	if (score >= levelUp){
+		frequencyBound -= 0.02;
+		levelUp += levelInterval;
+		pingLevelUp = true;
+	}
+
 	if (colorAlterTimer > 0) {
 		colorAlterTimer -= .1
 		console.log(colorAlterTimer);
@@ -198,27 +212,43 @@ function onTimer() {
 		rightColor = orange;
 	}
 
-	if (Math.random() * 1 > .9) {
-		var num = Math.ceil(Math.random() * 2);
-		var x = Math.random() * canvas.width;
-		var size = Math.random() * 40;
-		var v0 = Math.random() * 20;
+	//Generate squares
+	var gen = Math.random();
+	if (gen > frequencyBound) {
+		console.log(gen);
+		var num = Math.ceil(Math.random() * 10);
 		var color;
 
-		if (colorAlterTimer > 0)
+		if (colorAlterTimer > 0){
 			color = alterColor;
-		else if (1 === num)
-			color = leftColor;
-		else
-			color = rightColor;
-
-		squares.push(new Square(color, x, size, v0));
+			squares.push(new Square(color));
+		}
+		else if ((1 <= num) && (9 >= num)){
+			if (4 >= num){
+				color = leftColor;
+			}
+			else{
+				color = rightColor;
+			}
+			console.log(color);
+			squares.push(new Square(color));
+		}
+		else{
+			if (Math.random() < 0.5){
+				color = leftColor;
+			}
+			else{
+				color = rightColor;
+			}
+			squares.push(new ColorAlterSquare(color));
+		}
 	}
 }
 
 /* Function to display score and remaining misses */
 function drawText(){
-	ctx.font = "20px Arial";
+	var fontSize;
+	ctx.font = (fontHeight + "px Arial");
 	ctx.textAlign = "right";
 	ctx.textBaseline = "top";
 	ctx.fillStyle = "green";
@@ -230,16 +260,41 @@ function drawText(){
 	/* Do the same for the misses */
 	missesText = "Misses: " + misses;
 	ctx.fillText(missesText, canvas.width, fontHeight);
+
+	/* Print levelup */
+	if(pingLevelUp){
+		fontSize = 20 + Math.ceil(levelTextCtr/3);
+		ctx.font = (fontSize + "px Arial");
+		ctx.textAlign = "center";
+		ctx.textBaseline = "middle";
+		ctx.fillStyle = "teal";
+
+		ctx.fillText(levelText, canvas.width/2, canvas.height/2);
+	}
 }
 
 function clearText(){
-	scoreWidth = ctx.measureText(scoreText).width;
-	missesWidth = ctx.measureText(missesText).width;
-	height = fontHeight;
+	var fontSize;
+	ctx.font = (fontHeight + "px Arial");
+	var scoreWidth = ctx.measureText(scoreText).width;
+	var missesWidth = ctx.measureText(missesText).width;
+	var height = fontHeight;
 
 	ctx.clearRect(canvas.width - scoreWidth, 0, scoreWidth, height);
 	ctx.clearRect(canvas.width - missesWidth, height, missesWidth, height);
 
+	if(pingLevelUp){
+		fontSize = 20 + Math.ceil(levelTextCtr/3);
+		ctx.font = (fontSize + "px Arial");
+		var levelWidth = ctx.measureText(levelText).width;
+
+		ctx.clearRect(canvas.width/2 - levelWidth/2, canvas.height/2 - fontSize/2, levelWidth, fontSize);
+
+		if((++levelTextCtr) > 100){
+			levelTextCtr = 0;
+			pingLevelUp = false;
+		}
+	}
 }
 
 function moveSquares() {
@@ -280,6 +335,7 @@ function checkBounces() {
 				else if (sLeft >= platform.center && square.color === rightColor) { //Absorb
 					console.log("absorb: " + square.toString());
 					squares.splice(i, 1);
+					score++;
 					if (square instanceof ColorAlterSquare) {
 						colorAlterTimer = 5;
 						leftColor = rightColor;
@@ -316,6 +372,7 @@ function checkBounces() {
 
 					if (square.hasBounced && square.v0 > -10) { //EXPLOOOOOOOODE!!!!!!!!
 						squares.splice(i, 1);
+						score--;
 					}
 					timeFloor = Math.floor(sysTime - square.t0 - 2);
 					if (!square.hasBounced)
