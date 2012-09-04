@@ -7,7 +7,12 @@ var sysTime = 0;
 var purple = "#c267ff";
 var orange = "#de3500";
 
+<<<<<<< HEAD
 
+=======
+var leftColor = purple;
+var rightColor = orange;
+>>>>>>> Added the beginnings of a new square type
 
 var squares;
 var numSquares;
@@ -22,9 +27,9 @@ var scoreText;
 var missesText;
 var fontHeight = 30;
 
-function fSquare(color, sideLength, velocity) {
+function Square(color, sideLength, velocity) {
 	if (undefined === color)
-		this.color = "#FFFFFF";
+		this.color = "#000000";
 	else
 		this.color = color;
 
@@ -45,13 +50,15 @@ function fSquare(color, sideLength, velocity) {
 	this.x = Math.random() * canvas.width;
 	this.y = this.y0;
 	this.hasBounced = false;
+
+	this.type = "Plain";
 }
 
-fSquare.prototype.toString = function() {
-	return "fSquare<(" + this.x + "," + this.y + ") color: " + this.color + " sideLength: " + this.sideLength + ">";
+Square.prototype.toString = function() {
+	return "Square<(" + this.x + "," + this.y + ") color: " + this.color + " sideLength: " + this.sideLength + ">";
 }
 
-fSquare.prototype.draw = function() {
+Square.prototype.draw = function() {
 	var sLeft = this.x - this.sideLength / 2;
 	var sTop = this.y - this.sideLength / 2;
 
@@ -59,24 +66,48 @@ fSquare.prototype.draw = function() {
 	ctx.fillRect(sLeft, sTop, this.sideLength, this.sideLength);
 };
 
-fSquare.prototype.clear = function() {
+Square.prototype.clear = function() {
 	var sLeft = this.x - this.sideLength / 2;
 	var sTop = this.y - this.sideLength / 2;
 
-	ctx.clearRect(sLeft, sTop, this.sideLength, this.sideLength);
+	ctx.clearRect(sLeft - 1, sTop - 1, this.sideLength + 2, this.sideLength + 2);
 };
 
-fSquare.prototype.move = function() {
+Square.prototype.move = function() {
 	var time = sysTime - this.t0;
 	var newY = this.y0 + this.v0 * time + .5 * this.a * time * time;
 	this.y = newY;
 }
 
+function ColorAlterSquare(color, sideLength, velocity) {
+	Square.call(this, color, sideLength, velocity);
+	this.type = "CAS";
+}
+
+ColorAlterSquare.prototype = new Square();
+
+ColorAlterSquare.prototype.constructor = ColorAlterSquare;
+
+ColorAlterSquare.prototype.draw = function() {
+	var sLeft = this.x - this.sideLength / 2;
+	var sTop = this.y - this.sideLength / 2;
+
+	ctx.fillStyle = this.color;
+	ctx.fillRect(sLeft, sTop, this.sideLength, this.sideLength);
+
+	ctx.fillStyle = "black";
+	ctx.fillRect(sLeft + this.sideLength / 4, sTop + this.sideLength / 4, this.sideLength / 2, this.sideLength / 2);
+};
+
+ColorAlterSquare.prototype.toString = function() {
+	return "specialness :)";
+}
+
 function drawPillar(center) {
-	ctx.fillStyle = purple;
+	ctx.fillStyle = leftColor;
 	ctx.fillRect(center - canvas.width / 4, canvas.height - 10, canvas.width / 4, 10);
 
-	ctx.fillStyle = orange;
+	ctx.fillStyle = rightColor;
 	ctx.fillRect(center, canvas.height - 10, canvas.width / 4, 10);
 
 	ctx.fillStyle = "black"
@@ -86,16 +117,7 @@ function drawPillar(center) {
 function clearPillar(center) {
 	ctx.clearRect(center - canvas.width / 4, canvas.height - 10, canvas.width / 4, 10);
 	ctx.clearRect(center, canvas.height - 10, canvas.width / 4, 10);
-	ctx.clearRect(center - 10, canvas.height / 2, 20, canvas.height / 2);
-}
-
-function onMouseDown(event) {
-    movePillar = true;
-    offset = event.x - center;
-}
-
-function onMouseUp(event) {
-    movePillar = false;
+	ctx.clearRect(center - 10, canvas.height - 15, 20, 5);
 }
 
 function onTimer() {
@@ -107,13 +129,13 @@ function onTimer() {
 
 	if (Math.random() * 1 > .9) {
 		var num = Math.ceil(Math.random() * 2);
-		var sColor;
+		var color;
 
 		if (1 === num)
-			sColor = orange;
+			color = leftColor;
 		else
-			sColor = purple;
-		squares.push(new fSquare(sColor));
+			color = rightColor;
+		squares.push(new Square(color));
 	}
 }
 
@@ -145,18 +167,18 @@ function clearText(){
 
 function moveSquares() {
 	clearPillar(center);
-	squares.forEach(function(fSquare) {
-		fSquare.move();
+	squares.forEach(function(Square) {
+		Square.move();
 	});
 }
 
 function checkBounces() {
 	for (var i = 0; i < squares.length; i++) {
-		var fSquare = squares[i];
-		var sBottom = fSquare.y + fSquare.sideLength / 2;
-		var sTop = fSquare.y - fSquare.sideLength / 2;
-		var sRight = fSquare.x + fSquare.sideLength / 2;
-		var sLeft = fSquare.x - fSquare.sideLength / 2;
+		var square = squares[i];
+		var sBottom = square.y + square.sideLength / 2;
+		var sTop = square.y - square.sideLength / 2;
+		var sRight = square.x + square.sideLength / 2;
+		var sLeft = square.x - square.sideLength / 2;
 		var baseLeft = center - canvas.width / 4;
 		var baseRight = center + canvas.width / 4;
 		var baseTop = canvas.height - 10;
@@ -165,31 +187,47 @@ function checkBounces() {
 
 		if (sLeft < baseRight && sRight > baseLeft) {
 			if (sBottom >= baseTop) { //Hit the platform
-				if (sRight <= center && fSquare.color === purple) { //Absorb
-					console.log("absorb: " + fSquare.toString());
+				if (sRight <= center && square.color === leftColor) { //Absorb
+					console.log("absorb: " + square.toString());
 					squares.splice(i, 1);
+<<<<<<< HEAD
 					score++;
+=======
+					if (square.type === "CAS") {
+						rightColor = leftColor;
+					}
 				}
-				else if (sLeft >= center && fSquare.color === orange) { //Absorb
-					console.log("absorb: " + fSquare.toString());
+				else if (sLeft >= center && square.color === rightColor) { //Absorb
+					console.log("absorb: " + square.toString());
+					squares.splice(i, 1);
+					if (square.type === "CAS") {
+						leftColor === rightColor;
+					}
+>>>>>>> Added the beginnings of a new square type
+				}
+				else if (leftColor === rightColor === square.color) { //Absorb
+					console.log("absorb: " + square.toString());
 					squares.splice(i, 1);
 					score++;
 				}
 				else { //Bounce
-					console.log("bounce: " + fSquare.toString());
-					timeFloor = Math.floor(sysTime - fSquare.t0 - 2);
-					if (!fSquare.hasBounced)
-						fSquare.v0 += (fSquare.a * timeFloor);
-					else {
-						timeUp = (-1 * fSquare.v0) / fSquare.a
-						fSquare.v0 = fSquare.a * (timeFloor - timeUp);
+					console.log("bounce: " + square.toString());
+					if (square.hasBounced && square.v0 > -10) { //EXPLOOOOOOOODE!!!!!!!!
+						squares.splice(i, 1);
 					}
-					fSquare.v0 = Math.floor(fSquare.v0);
-					fSquare.v0 *= -1;
-					console.log("v0 down: "  + fSquare.v0 + "\tt0 down: " + fSquare.t0 + "\t\nsystime: " + sysTime + "\ttimeUp: " + timeUp);
-					fSquare.y0 = baseTop - fSquare.sideLength / 2 - 1;
-					fSquare.t0 = sysTime;
-					fSquare.hasBounced = true;
+					timeFloor = Math.floor(sysTime - square.t0 - 2);
+					if (!square.hasBounced)
+						square.v0 += (square.a * timeFloor);
+					else {
+						timeUp = (-1 * square.v0) / square.a
+						square.v0 = square.a * (timeFloor - timeUp);
+					}
+					square.v0 = Math.floor(square.v0);
+					square.v0 *= -1;
+					console.log("v0 down: "  + square.v0 + "\tt0 down: " + square.t0 + "\t\nsystime: " + sysTime + "\ttimeUp: " + timeUp);
+					square.y0 = baseTop - square.sideLength / 2 - 1;
+					square.t0 = sysTime;
+					square.hasBounced = true;
 				}
 			}
 		}
@@ -200,20 +238,29 @@ function checkBounces() {
 	}
 }
 
-function clearThings (fSquare) {
-	squares.forEach(function(fSquare) {
-		fSquare.clear();
+function clearThings (Square) {
+	squares.forEach(function(Square) {
+		Square.clear();
 	})
 	clearPillar(center);
 	clearText();
 };
 
-function drawThings (fSquare) {
-	squares.forEach(function (fSquare) {
-		fSquare.draw();
+function drawThings (Square) {
+	squares.forEach(function (Square) {
+		Square.draw();
 	})
 	drawPillar(center);
 	drawText();
+}
+
+function onMouseDown(event) {
+    movePillar = true;
+    offset = event.pageX - center;
+}
+
+function onMouseUp(event) {
+    movePillar = false;
 }
 
 canvas.onmousemove = function (event) {
@@ -229,6 +276,6 @@ canvas.addEventListener('mouseup', onMouseUp, false);
 canvas.addEventListener('mousedown', onMouseDown, false);
 
 drawPillar(center);
-squares = [new fSquare(purple, 10), new fSquare(orange, 10)];
+squares = [new Square(leftColor, 10), new Square(rightColor, 10), new ColorAlterSquare(leftColor)];
 numSquares = 2;
 intervalId = setInterval(onTimer, timerDelay);
