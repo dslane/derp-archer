@@ -1,3 +1,7 @@
+/*
+ * File Comment
+ */
+
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 var movePillar = false;
@@ -13,7 +17,7 @@ var rightColor = orange;
 var squares;
 var platform;
 var gravity = 9.8;
-var frequencyBound = 0.965;
+var frequencyBound = 0.968;
 
 var intervalId;
 var timerDelay = 100;
@@ -106,12 +110,16 @@ Platform.prototype.toString = function() {
 	return "Platform<" + origin + center + width + height + ">";
 }
 
-function Faller(color, x, y, width, height, y0, v0, a) {
+function Faller(color, x, y, width, height, y0, vy0, x0, vx0, a) {
 	Drawable.call(this, color, x, y, width, height);
 	if (undefined != y0)
 		this.y0 = y0
-	if (undefined != v0)
-		this.v0 = v0;
+	if (undefined != vy0)
+		this.vy0 = vy0;
+	if (undefined != x0)
+		this.x0 = x0;
+	if (undefined != vx0)
+		this.vx0 = vx0;
 	if (undefined != a)
 		this.a = a;
 
@@ -121,13 +129,17 @@ function Faller(color, x, y, width, height, y0, v0, a) {
 Faller.prototype = new Drawable();
 Faller.prototype.constructor = Faller;
 Faller.prototype.y0 = 0;
-Faller.prototype.v0 = 0;
+Faller.prototype.vy0 = 0;
+Faller.prototype.x0 = canvas.width/2;
+Faller.prototype.vx0 = 1;
 Faller.prototype.a = gravity;
 
 Faller.prototype.fall = function() {
 	var time = sysTime - this.t0;
-	var newY = this.y0 + this.v0 * time + .5 * this.a * time * time;
+	var newY = this.y0 + this.vy0 * time + .5 * this.a * time * time;
+	var newX = this.x0 + this.vx0 * time;
 	this.y = newY;
+	this.x = newX;
 }
 
 Faller.prototype.toString = function() {
@@ -135,13 +147,13 @@ Faller.prototype.toString = function() {
 	var width = "width: " + this.width + " ";
 	var height = "height: " + this.height + " ";
 	var color = "color " + this.color + " ";
-	var velocity = "initial velocity: " + this.v0 + " final velocity: " + this.v0 + 2 * this.a * (sysTime - this.t0) + " "
+	var velocity = "initial velocity: " + this.vy0 + " final velocity: " + this.vy0 + 2 * this.a * (sysTime - this.t0) + " ";
 	var acceleration = "acceleration: " + this.a;
 	return "Faller<" + origin + width + height + color + velocity + acceleration + ">";
 }
 
-function Square(color, x, sideLength, y0, v0, a) {
-	Faller.call(this, color, x, 0 - sideLength / 2, sideLength, sideLength, y0, v0, a);
+function Square(color, x, sideLength, y0, vy0, x0, vx0, a) {
+	Faller.call(this, color, x, 0 - sideLength / 2, sideLength, sideLength, y0, vy0, x0, vx0, a);
 	this.hasBounced = false;
 	this.sideLength = sideLength;
 }
@@ -153,13 +165,13 @@ Square.prototype.toString = function() {
 	var origin = "(" + this.x + "," + this.y + ") ";
 	var sideLength = "sideLength: " + this.sideLength + " ";
 	var color = "color " + this.color + " ";
-	var velocity = "initial velocity: " + this.v0 + " final velocity: " + this.v0 + 2 * this.a * (sysTime - this.t0) + " "
+	var velocity = "initial velocity: " + this.vy0 + " final velocity: " + this.vy0 + 2 * this.a * (sysTime - this.t0) + " ";
 	var acceleration = "acceleration: " + this.a;
 	return "Square<" + origin + sideLength + color + velocity + acceleration + ">";
 }
 
-function ColorAlterSquare(color, x, sideLength, y0, v0, a) {
-	Square.call(this, color, x, sideLength, y0, v0, a);
+function ColorAlterSquare(color, x, sideLength, y0, vy0, x0, vx0, a) {
+	Square.call(this, color, x, sideLength, y0, vy0, x0, vx0, a);
 }
 
 ColorAlterSquare.prototype = new Square();
@@ -216,12 +228,14 @@ function onTimer() {
 	var gen = Math.random();
 	var color;
 	if (gen > frequencyBound) {
-		console.log(gen);
 		var num = Math.ceil(Math.random() * 10);
+		var size = Math.random() * 30 + 10;
+		var x0 = Math.random() * canvas.width;
+		var vx0 = Math.random() * 10 - 5;
 
 		if (colorAlterTimer > 0){
 			color = alterColor;
-			squares.push(new Square(color, Math.random() * canvas.width, Math.random() * 40));
+			squares.push(new Square(color, x0, size, undefined, undefined, x0, vx0));
 		}
 		else if ((1 <= num) && (9 >= num)){
 			if (4 >= num){
@@ -231,7 +245,7 @@ function onTimer() {
 				color = platform.rightColor;
 			}
 			console.log(color);
-			squares.push(new Square(color, Math.random() * canvas.width, Math.random() * 40));
+			squares.push(new Square(color, x0, size, undefined, undefined, x0, vx0));
 		}
 		else{
 			if (Math.random() < 0.5){
@@ -240,7 +254,7 @@ function onTimer() {
 			else{
 				color = platform.rightColor;
 			}
-			squares.push(new ColorAlterSquare(color, Math.random() * canvas.width, Math.random() * 40));
+			squares.push(new ColorAlterSquare(color, x0, size, undefined, undefined, x0, vx0));
 		}
 	}
 }
@@ -267,7 +281,7 @@ function drawText(){
 		ctx.font = (fontSize + "px Arial");
 		ctx.textAlign = "center";
 		ctx.textBaseline = "middle";
-		ctx.fillStyle = "teal";
+		ctx.fillStyle = "rgba(0, 128, 128, 128)";
 
 		ctx.fillText(levelText, canvas.width/2, canvas.height/2);
 	}
@@ -370,20 +384,20 @@ function checkBounces() {
 						continue;
 					}
 
-					if (square.hasBounced && square.v0 > -10) { //EXPLOOOOOOOODE!!!!!!!!
+					if (square.hasBounced && square.vy0 > -10) { //EXPLOOOOOOOODE!!!!!!!!
 						squares.splice(i, 1);
-						score--;
+						score -= 5;
 					}
 					timeFloor = Math.floor(sysTime - square.t0 - 2);
 					if (!square.hasBounced)
-						square.v0 += (square.a * timeFloor);
+						square.vy0 += (square.a * timeFloor);
 					else {
-						timeUp = (-1 * square.v0) / square.a
-						square.v0 = square.a * (timeFloor - timeUp);
+						timeUp = (-1 * square.vy0) / square.a
+						square.vy0 = square.a * (timeFloor - timeUp);
 					}
-					square.v0 = Math.floor(square.v0);
-					square.v0 *= -1;
-					console.log("v0 down: "  + square.v0 + "\tt0 down: " + square.t0 + "\t\nsystime: " + sysTime + "\ttimeUp: " + timeUp);
+					square.vy0 = Math.floor(square.vy0);
+					square.vy0 *= -1;
+					console.log("vy0 down: "  + square.vy0 + "\tt0 down: " + square.t0 + "\t\nsystime: " + sysTime + "\ttimeUp: " + timeUp);
 					square.y0 = baseTop - square.sideLength / 2 - 1;
 					square.t0 = sysTime;
 					square.hasBounced = true;
@@ -436,5 +450,8 @@ canvas.addEventListener('mouseup', onMouseUp, false);
 canvas.addEventListener('mousedown', onMouseDown, false);
 
 platform = new Platform(purple, orange, canvas.width / 2, canvas.height - 10, canvas.width / 2, 10);
-squares = [new Square(leftColor, canvas.width / 3, 10), new Square(rightColor, 2 * canvas.width / 3, 10), new ColorAlterSquare(rightColor, Math.random() * canvas.width, 15)];
+squares = [new Square(leftColor, canvas.width / 3, 10)];
 intervalId = setInterval(onTimer, timerDelay);
+
+//For addition to construction of squares for testing
+//, new Square(rightColor, 2 * canvas.width / 3, 10), new ColorAlterSquare(rightColor, Math.random() * canvas.width, 15)
