@@ -1,5 +1,5 @@
 /*
- * File Comment
+ * File Comment, see
  */
 
 var canvas = document.getElementById("myCanvas");
