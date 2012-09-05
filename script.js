@@ -25,7 +25,7 @@ var score = 0;
 var score = 0;
 var levelInterval = 10;
 var levelUp = score + levelInterval;
-var levelText = "Level Up!";
+var levelText = "More Blocks!";
 var levelTextCtr = 0;
 var pingLevelUp = false;
 var misses = 10;
@@ -123,7 +123,8 @@ function Faller(color, x, y, width, height, y0, vy0, x0, vx0, a) {
 	if (undefined != a)
 		this.a = a;
 
-	this.t0 = sysTime;
+	this.tx0 = sysTime;
+	this.ty0 = sysTime;
 }
 
 Faller.prototype = new Drawable();
@@ -135,9 +136,10 @@ Faller.prototype.vx0 = 1;
 Faller.prototype.a = gravity;
 
 Faller.prototype.fall = function() {
-	var time = sysTime - this.t0;
-	var newY = this.y0 + this.vy0 * time + .5 * this.a * time * time;
-	var newX = this.x0 + this.vx0 * time;
+	var ytime = sysTime - this.ty0;
+	var xtime = sysTime - this.tx0;
+	var newY = this.y0 + this.vy0 * ytime + .5 * this.a * ytime * ytime;
+	var newX = this.x0 + this.vx0 * xtime;
 	this.y = newY;
 	this.x = newX;
 }
@@ -147,7 +149,7 @@ Faller.prototype.toString = function() {
 	var width = "width: " + this.width + " ";
 	var height = "height: " + this.height + " ";
 	var color = "color " + this.color + " ";
-	var velocity = "initial velocity: " + this.vy0 + " final velocity: " + this.vy0 + 2 * this.a * (sysTime - this.t0) + " ";
+	var velocity = "initial velocity: " + this.vy0 + " final velocity: " + this.vy0 + 2 * this.a * (sysTime - this.ty0) + " ";
 	var acceleration = "acceleration: " + this.a;
 	return "Faller<" + origin + width + height + color + velocity + acceleration + ">";
 }
@@ -165,7 +167,7 @@ Square.prototype.toString = function() {
 	var origin = "(" + this.x + "," + this.y + ") ";
 	var sideLength = "sideLength: " + this.sideLength + " ";
 	var color = "color " + this.color + " ";
-	var velocity = "initial velocity: " + this.vy0 + " final velocity: " + this.vy0 + 2 * this.a * (sysTime - this.t0) + " ";
+	var velocity = "initial velocity: " + this.vy0 + " final velocity: " + this.vy0 + 2 * this.a * (sysTime - this.ty0) + " ";
 	var acceleration = "acceleration: " + this.a;
 	return "Square<" + origin + sideLength + color + velocity + acceleration + ">";
 }
@@ -231,7 +233,7 @@ function onTimer() {
 		var num = Math.ceil(Math.random() * 10);
 		var size = Math.random() * 30 + 10;
 		var x0 = Math.random() * canvas.width;
-		var vx0 = Math.random() * 10 - 5;
+		var vx0 = Math.random() * 30 - 15;
 
 		if (colorAlterTimer > 0){
 			color = alterColor;
@@ -281,7 +283,7 @@ function drawText(){
 		ctx.font = (fontSize + "px Arial");
 		ctx.textAlign = "center";
 		ctx.textBaseline = "middle";
-		ctx.fillStyle = "rgba(0, 128, 128, 128)";
+		ctx.fillStyle = "rgba(0, 128, 128, 0.6)";
 
 		ctx.fillText(levelText, canvas.width/2, canvas.height/2);
 	}
@@ -302,7 +304,7 @@ function clearText(){
 		ctx.font = (fontSize + "px Arial");
 		var levelWidth = ctx.measureText(levelText).width;
 
-		ctx.clearRect(canvas.width/2 - levelWidth/2, canvas.height/2 - fontSize/2, levelWidth, fontSize);
+		ctx.clearRect(canvas.width/2 - levelWidth/2, canvas.height/2 - fontSize/2, levelWidth, fontSize + 1);
 
 		if((++levelTextCtr) > 100){
 			levelTextCtr = 0;
@@ -388,7 +390,7 @@ function checkBounces() {
 						squares.splice(i, 1);
 						score -= 5;
 					}
-					timeFloor = Math.floor(sysTime - square.t0 - 2);
+					timeFloor = Math.floor(sysTime - square.ty0 - 2);
 					if (!square.hasBounced)
 						square.vy0 += (square.a * timeFloor);
 					else {
@@ -397,9 +399,9 @@ function checkBounces() {
 					}
 					square.vy0 = Math.floor(square.vy0);
 					square.vy0 *= -1;
-					console.log("vy0 down: "  + square.vy0 + "\tt0 down: " + square.t0 + "\t\nsystime: " + sysTime + "\ttimeUp: " + timeUp);
+					console.log("vy0 down: "  + square.vy0 + "\tty0 down: " + square.ty0 + "\t\nsystime: " + sysTime + "\ttimeUp: " + timeUp);
 					square.y0 = baseTop - square.sideLength / 2 - 1;
-					square.t0 = sysTime;
+					square.ty0 = sysTime;
 					square.hasBounced = true;
 				}
 			}
