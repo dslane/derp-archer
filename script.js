@@ -138,10 +138,20 @@ Faller.prototype.a = gravity;
 Faller.prototype.fall = function() {
 	var time = sysTime - this.t0;
 
+	if (this.x + this.width / 2 >= canvas.width) {
+		this.vx0 = this.vx0 * -1;
+		this.x0 = canvas.width - this.width / 2 - 1;
+		this.tx0 = sysTime;
+	}
+	if (this.x - this.width / 2 <= 0) {
+		this.vx0 = this.vx0 * -1;
+		this.x0 = this.width / 2 + 1;
+		this.tx0 = sysTime;
+	}
 	var ytime = sysTime - this.ty0;
 	var xtime = sysTime - this.tx0;
-	var newY = this.y0 + this.vy0 * time + .5 * this.a * time * time;
-	var newX = this.x0 + this.vx0 * time;
+	var newY = this.y0 + this.vy0 * ytime + .5 * this.a * ytime * ytime;
+	var newX = this.x0 + this.vx0 * xtime;
 
 	this.y = newY;
 	this.x = newX;
