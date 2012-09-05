@@ -138,16 +138,6 @@ Faller.prototype.a = gravity;
 Faller.prototype.fall = function() {
 	var time = sysTime - this.t0;
 
-	if (this.x + this.width > canvas.width) {
-		this.vx0 = this.vx0 * -1;
-		this.x0 = canvas.width - this.width - 1;
-		this.tx0 = time;
-	}
-	if (this.x < 0) {
-		this.vx0 = this.vx0 * -1;
-		this.x0 = 1;
-		this.tx0 = time;
-	}
 	var ytime = sysTime - this.ty0;
 	var xtime = sysTime - this.tx0;
 	var newY = this.y0 + this.vy0 * time + .5 * this.a * time * time;
