@@ -136,23 +136,10 @@ Faller.prototype.vx0 = 1;
 Faller.prototype.a = gravity;
 
 Faller.prototype.fall = function() {
-	var time = sysTime - this.t0;
-
-	if (this.x + this.width > canvas.width) {
-		this.vx0 = this.vx0 * -1;
-		this.x0 = canvas.width - this.width - 1;
-		this.tx0 = time;
-	}
-	if (this.x < 0) {
-		this.vx0 = this.vx0 * -1;
-		this.x0 = 1;
-		this.tx0 = time;
-	}
 	var ytime = sysTime - this.ty0;
 	var xtime = sysTime - this.tx0;
-	var newY = this.y0 + this.vy0 * time + .5 * this.a * time * time;
-	var newX = this.x0 + this.vx0 * time;
-
+	var newY = this.y0 + this.vy0 * ytime + .5 * this.a * ytime * ytime;
+	var newX = this.x0 + this.vx0 * xtime;
 	this.y = newY;
 	this.x = newX;
 }
@@ -246,8 +233,7 @@ function onTimer() {
 		var num = Math.ceil(Math.random() * 10);
 		var size = Math.random() * 30 + 10;
 		var x0 = Math.random() * canvas.width;
-		//var vx0 = Math.random() * 30 - 5;
-		var vx0 = 50;
+		var vx0 = Math.random() * 30 - 15;
 
 		if (colorAlterTimer > 0){
 			color = alterColor;
