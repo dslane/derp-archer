@@ -36,6 +36,10 @@ var fontHeight = 30;
 var colorAlterTimer = 0;
 var alterColor;
 
+/*
+ * Drawable - Prototype for drawable objects.  Contains color to be drawn,
+ * coordinates, and dimensions.
+ */
 function Drawable(color, x, y, width, height) {
 	if (undefined != color)
 		this.color = color;
@@ -55,15 +59,24 @@ Drawable.prototype.y = 0;
 Drawable.prototype.width = 2;
 Drawable.prototype.height = 2;
 
+/*
+ * draw - Function to draw a drawable based on its fields.
+ */
 Drawable.prototype.draw = function() {
 	ctx.fillStyle = this.color;
 	ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
 }
 
+/*
+ * clear - Function to clear a drawable based on its fields.
+ */
 Drawable.prototype.clear = function() {
 	ctx.clearRect(this.x - this.width / 2 - 1, this.y - this.height/2 - 1, this.width + 2, this.height + 2);
 }
 
+/*
+ * toString - toString for drawables for debugging purposes
+ */
 Drawable.prototype.toString = function() {
 	var origin = "(" + this.x + "," + this.y + ") ";
 	var width = "width: " + this.width + " ";
@@ -71,6 +84,11 @@ Drawable.prototype.toString = function() {
 	var color = "color " + this.color + " ";
 	return "Faller<" + origin + width + color + ">";
 }
+
+/*
+ * Platform - drawable object representing the paddle that the player attempts
+ * to catch the blocks on
+ */
 
 function Platform(leftColor, rightColor, center, y, width, height) {
 	Drawable.call(this, undefined, center - width / 2, y, width, height);
@@ -86,6 +104,9 @@ Platform.prototype.constructor = Platform;
 Platform.prototype.leftColor = "black";
 Platform.prototype.rightColor = "black";
 
+/*
+ * draw - Overrides draw function for Platform object; draws platform
+ */
 Platform.prototype.draw = function() {
 	ctx.fillStyle = this.leftColor;
 	ctx.fillRect(this.x, this.y, this.width / 2, this.height);
@@ -97,11 +118,18 @@ Platform.prototype.draw = function() {
 	ctx.fillRect(this.center - 10, canvas.height - 15, 20, 5);
 }
 
+/*
+ * clear - overrides clear function for Platform object; clears platform
+ */
 Platform.prototype.clear = function() {
 	ctx.clearRect(this.x, this.y, this.width, this.height);
 	ctx.clearRect(this.center - 10, canvas.height - 15, 20, 5);
 }
 
+/*
+ * toString - overrides toString function for Platform object
+ * Converts to string for debugging purposes
+ */
 Platform.prototype.toString = function() {
 	var origin = "(" + this.x + "," + this.y + ") ";
 	var center = "center: " + this.center + " ";
@@ -110,6 +138,11 @@ Platform.prototype.toString = function() {
 	return "Platform<" + origin + center + width + height + ">";
 }
 
+/*
+ * Faller - Prototype for any object that falls.  Takes standard drawable args,
+ * as well as initial x and y coordinates, velocities in x and y direction, and
+ * vertical acceleration
+ */
 function Faller(color, x, y, width, height, y0, vy0, x0, vx0, a) {
 	Drawable.call(this, color, x, y, width, height);
 	if (undefined != y0)
@@ -135,6 +168,11 @@ Faller.prototype.x0 = canvas.width/2;
 Faller.prototype.vx0 = 1;
 Faller.prototype.a = gravity;
 
+/*
+ * fall - function to make Fallers fall; changes current x and y coordinates based
+ * on velocity and acceleration.  Also checks for bounces on left and right of 
+ * canvas, and reflects faller if it hits a wall.
+ */
 Faller.prototype.fall = function() {
 	var time = sysTime - this.t0;
 
@@ -157,6 +195,10 @@ Faller.prototype.fall = function() {
 	this.x = newX;
 }
 
+/*
+ * toString - Overrides function for drawable; converts faller to string for debugging
+ * purposes.
+ */
 Faller.prototype.toString = function() {
 	var origin = "(" + this.x + "," + this.y + ") ";
 	var width = "width: " + this.width + " ";
@@ -167,6 +209,10 @@ Faller.prototype.toString = function() {
 	return "Faller<" + origin + width + height + color + velocity + acceleration + ">";
 }
 
+/*
+ * Square - instance of faller for a standard square.  Additional fields for side
+ * length and boolean as to whether or not the square has bounced.
+ */
 function Square(color, x, sideLength, y0, vy0, x0, vx0, a) {
 	Faller.call(this, color, x, 0 - sideLength / 2, sideLength, sideLength, y0, vy0, x0, vx0, a);
 	this.hasBounced = false;
@@ -176,6 +222,10 @@ function Square(color, x, sideLength, y0, vy0, x0, vx0, a) {
 Square.prototype = new Faller();
 Square.prototype.constructor = Square;
 
+/*
+ * toString - overrides toString function in drawable; converts square to string for
+ * debugging purposes
+ */
 Square.prototype.toString = function() {
 	var origin = "(" + this.x + "," + this.y + ") ";
 	var sideLength = "sideLength: " + this.sideLength + " ";
@@ -185,6 +235,10 @@ Square.prototype.toString = function() {
 	return "Square<" + origin + sideLength + color + velocity + acceleration + ">";
 }
 
+/*
+ * ColorAlterSquare - Special square object that changes color of paddle depending
+ * on where it as called.  Appears with different sprite
+ */
 function ColorAlterSquare(color, x, sideLength, y0, vy0, x0, vx0, a) {
 	Square.call(this, color, x, sideLength, y0, vy0, x0, vx0, a);
 }
@@ -192,6 +246,10 @@ function ColorAlterSquare(color, x, sideLength, y0, vy0, x0, vx0, a) {
 ColorAlterSquare.prototype = new Square();
 ColorAlterSquare.prototype.constructor = ColorAlterSquare;
 
+/*
+ * draw - overrides draw function in drawable; Draws the square as usual, but with
+ * a black box in the center to indicate it is special
+ */
 ColorAlterSquare.prototype.draw = function() {
 	var sLeft = this.x - this.sideLength / 2;
 	var sTop = this.y - this.sideLength / 2;
@@ -203,20 +261,30 @@ ColorAlterSquare.prototype.draw = function() {
 	ctx.fillRect(sLeft + this.sideLength / 4, sTop + this.sideLength / 4, this.sideLength / 2, this.sideLength / 2);
 };
 
+/*
+ * toString - overrides toString function in drawable; converts to string (provides special
+ * message for special square) for debugging purposes
+ */
 ColorAlterSquare.prototype.toString = function() {
 	return "specialness :)";
 }
 
+
+/*
+ *
+ */
 function drawPillar(center) {
 
 }
-
 function clearPillar(center) {
 	ctx.clearRect(center - canvas.width / 4, canvas.height - 10, canvas.width / 4, 10);
 	ctx.clearRect(center, canvas.height - 10, canvas.width / 4, 10);
 	ctx.clearRect(center - 10, canvas.height - 15, 20, 5);
 }
 
+/*
+ * onTimer - called at regular intervals to clear, adjust, and redraw graphics
+ */
 function onTimer() {
 	sysTime += .1;
 	clearThings();
@@ -275,7 +343,9 @@ function onTimer() {
 	}
 }
 
-/* Function to display score and remaining misses */
+/* 
+ * drawText - Function to draw score, misses remaining, and levelup notices.
+ */
 function drawText(){
 	var fontSize;
 	ctx.font = (fontHeight + "px Arial");
@@ -303,6 +373,9 @@ function drawText(){
 	}
 }
 
+/*
+ * clearText - Function to clear the text drawn in drawText
+ */
 function clearText(){
 	var fontSize;
 	ctx.font = (fontHeight + "px Arial");
@@ -327,6 +400,9 @@ function clearText(){
 	}
 }
 
+/*
+ * moveSquares - Function to move each square
+ */
 function moveSquares() {
 	clearPillar(center);
 	squares.forEach(function(square) {
@@ -334,6 +410,10 @@ function moveSquares() {
 	});
 }
 
+/*
+ * checkBounces - Function to determine if squares have hit paddle or gone off screen.
+ * Causes squares to bounce, be absorbed, or disappear, and adjusts score/misses appropriately.
+ */
 function checkBounces() {
 	for (var i = 0; i < squares.length; i++) {
 		var square = squares[i];
@@ -420,13 +500,16 @@ function checkBounces() {
 				}
 			}
 		}
-		else if (sTop >= canvas.height) { //Missed the platform
+		else if (sBottom >= canvas.height) { //Missed the platform
 			squares.splice(i, 1);
 			misses--;
 		}
 	}
 }
 
+/*
+ * clearThings - Wrapper function to call each clear function
+ */
 function clearThings () {
 	squares.forEach(function(square) {
 		square.clear();
@@ -435,6 +518,9 @@ function clearThings () {
 	clearText();
 };
 
+/*
+ * drawThings - Wrapper function to call each draw function
+ */
 function drawThings () {
 	squares.forEach(function (square) {
 		square.draw();
@@ -443,15 +529,24 @@ function drawThings () {
 	drawText();
 }
 
+/*
+ * onMouseDown - function to move center platform on mousedown
+ */
 function onMouseDown(event) {
     movePillar = true;
     offset = event.pageX - platform.center;
 }
 
+/*
+ * onMouseUp - function to cause platform to stop moving on mouseup
+ */
 function onMouseUp(event) {
     movePillar = false;
 }
 
+/*
+ * bind onmousemove to function to move platform
+ */
 canvas.onmousemove = function (event) {
 	if (true === movePillar) {
 		clearThings();
