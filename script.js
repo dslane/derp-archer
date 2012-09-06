@@ -34,7 +34,6 @@ var missesText;
 var fontHeight = 30;
 
 var effectTimer = 0;
-var platformAlterColor;
 var squareAlterColor;
 
 /*
@@ -671,11 +670,11 @@ canvas.onmousemove = function (event) {
 	}
 };
 
-// TODO: Get start to work neatly, write start screen
-function onKeyPress (event) {
-	if("s".charCodeAt(0) === event.keyCode){
-		console.log("S!!!");
-	}
+/*
+ * Everthing for start screen
+ */
+function Button(color, x, y, width, height, text){
+	
 }
 
 begin();
@@ -688,7 +687,7 @@ function begin(){
 	canvas.focus();
 
 	platform = new Platform(purple, orange, canvas.width / 2, canvas.height - 10, canvas.width / 2, 10);
-	squares = [new ColorAlterSquare(leftColor, canvas.width / 3, 10)];
+	squares = [new Square(leftColor, canvas.width / 3, 10)];
 	intervalId = setInterval(onTimer, timerDelay);
 }
 
