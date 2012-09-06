@@ -670,6 +670,12 @@ canvas.onmousemove = function (event) {
 	}
 };
 
+function onKeyPress (event) {
+	if ("s".charCodeAt(0) === event.keyCode) {
+		console.log("S!!!");
+	}
+}
+
 /*
  * Everthing for start screen
  */
