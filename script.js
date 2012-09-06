@@ -7,7 +7,7 @@ var ctx = canvas.getContext("2d");
 var movePillar = false;
 
 var startScreen = true;
-var offset = 0;
+var mouseDownLoc = 0;
 var sysTime = 0;
 var purple = "#c267ff";
 var orange = "#de3500";
@@ -33,7 +33,7 @@ var scoreText;
 var missesText;
 var fontHeight = 30;
 
-var colorAlterTimer = 0;
+var effectTimer = 0;
 var platformAlterColor;
 var squareAlterColor;
 
@@ -99,7 +99,7 @@ function Platform(leftColor, rightColor, center, y, width, height) {
 	this.center = center;
 	this.color = undefined;
 
-	this.type = 0;
+	this.restore();
 }
 
 Platform.prototype = new Drawable();
@@ -107,51 +107,93 @@ Platform.prototype.constructor = Platform;
 Platform.prototype.leftColor = "black";
 Platform.prototype.rightColor = "black";
 
-/*
- * plainDraw - Draws a simple, two color platform with one color on each side of the center
- */
-var plainDraw = function() {
-	ctx.fillStyle = this.leftColor;
-	ctx.fillRect(this.x, this.y, this.width / 2, this.height);
-
-	ctx.fillStyle = this.rightColor;
-	ctx.fillRect(this.center, this.y, this.width / 2, this.height);
-
-	ctx.fillStyle = "black"
-	ctx.fillRect(this.center - 10, canvas.height - 15, 20, 5);
+Platform.prototype.restore = function() {
+	this.leftColorStarts = [this.center - this.width / 2];
+	this.leftColorLengths = [this.width / 2];
+	this.rightColorStarts = [this.center];
+	this.rightColorLengths = [this.width / 2];
 }
 
-/*
- * colorAlterDraw - Draws the platform entirely in alterColor
- */
-var colorAlterDraw = function() {
-	ctx.fillStyle = platformAlterColor;
-	ctx.fillRect(this.x, this.y, this.width, this.height);
-
-	ctx.fillStyle = "black"
-	ctx.fillRect(this.center - 10, canvas.height - 15, 20, 5);
-}
-
-/*
- * checkerboardDraw - Draws the platform in two colors, alternating at every 1/6 of the plaform
- */
-var checkerboardDraw = function() {
-	ctx.fillStyle = this.leftColor;
-	ctx.fillRect(this.x, this.y, this.width, this.height);
-
-	ctx.fillStyle = this.rightColor;
-	for (var i = 1; i <= 3; i++) {
-		ctx.fillRect(this.x + (2 * i - 1) * this.width / 6, this.y, this.width / 6, this.height);
+Platform.prototype.absorbed = function(square) {
+	var sBottom = square.y + square.sideLength / 2;
+	var sTop = square.y - square.sideLength / 2;
+	var sRight = square.x + square.sideLength / 2;
+	var sLeft = square.x - square.sideLength / 2;
+	var baseLeft = this.center - canvas.width / 4;
+	var baseRight = this.center + canvas.width / 4;
+	var baseTop = canvas.height - 10;
+	
+	switch (square.color) {
+		case this.leftColor: {
+			for (var i = 0; i < this.leftColorStarts.length; i++) {
+				var left = this.leftColorStarts[i];
+				var right = left + this.leftColorLengths[i];
+				if (sLeft >= left && sRight <= right) { //In a colored segment
+					console.log("absorb");
+					return true;
+				}
+				else if (sLeft < baseLeft && sRight > left) { //Hanging off left edge
+					console.log("absorb");
+					return true;
+				}
+				else if (sRight > baseRight && sLeft < right) {//Hanging off right edge
+					console.log("absorb");
+					return true
+				}
+			}
+			break;
+		}
+		case this.rightColor: {
+			for (var i = 0; i < this.rightColorStarts.length; i++) {
+				var left = this.rightColorStarts[i];
+				var right = left + this.rightColorLengths[i];
+				if (sLeft >= left && sRight <= right) {//In a colored segment
+					console.log("absorb");
+					return true;
+				}
+				else if (sLeft < baseLeft && sRight > left) {//Hanging off left edge
+					console.log("absorb");
+					return true;
+				}
+				else if (sRight > baseRight && sLeft < right) {//Hanging off right 
+					console.log("absorb");
+					return true
+				}
+			}
+			break;
+		}
+		default:
+			break;
 	}
-
-	ctx.fillStyle = "black"
-	ctx.fillRect(this.center - 10, canvas.height - 15, 20, 5);
+	console.log("bounce")
+	return false;
 }
 
 /*
- * draw - Overrides the default draw for Platform
+ * draw - Overrides the default draw method, in order to draw the platform
  */
-Platform.prototype.draw = plainDraw; //Assigns the draw function to initially be plainDraw
+Platform.prototype.draw = function() {
+	var i;
+	var left;
+	var width;
+
+	ctx.fillStyle = this.leftColor;
+	for (i = 0; i < this.leftColorStarts.length; i++) {
+		left = this.leftColorStarts[i];
+		width = this.leftColorLengths[i];
+		ctx.fillRect(left, this.y, width, this.height);
+	};
+
+	ctx.fillStyle = this.rightColor;
+	for (i = 0; i < this.rightColorStarts.length; i++) {
+		left = this.rightColorStarts[i];
+		width = this.rightColorLengths[i];
+		ctx.fillRect(left, this.y, width, this.height);
+	};
+
+	ctx.fillStyle = "black"
+	ctx.fillRect(this.center - 10, this.y - 5, 20, 5);
+}
 
 /*
  * clear - overrides clear function for Platform object; clears platform
@@ -352,11 +394,10 @@ function onTimer() {
 		pingLevelUp = true;
 	}
 
-	if (colorAlterTimer > 0) {
-		colorAlterTimer -= .1
-	} else if (colorAlterTimer <= 0) {
-		Platform.prototype.draw = plainDraw;
-		platform.type = 0;
+	if (effectTimer > 0) {
+		effectTimer -= .1
+	} else if (effectTimer <= 0) {
+		platform.restore();
 	}
 
 	//Generate squares
@@ -368,7 +409,7 @@ function onTimer() {
 		var x0 = Math.random() * canvas.width;
 		var vx0 = Math.random() * 30 - 5;
 
-		if (colorAlterTimer > 0){
+		if (effectTimer > 0){
 			squares.push(new Square(squareAlterColor, x0, size, undefined, undefined, x0, vx0));
 		}
 		else if ((1 <= num) && (8 >= num)){
@@ -483,73 +524,53 @@ function checkBounces() {
 		var baseRight = platform.center + canvas.width / 4;
 		var baseTop = canvas.height - 10;
 		var timeUp;
-		var timeFloor;
+		var time;
 
-		if (sLeft < baseRight && sRight > baseLeft) {
-			if (sBottom >= baseTop) { //Hit the platform
-				if (sRight <= platform.center && square.color === platform.leftColor) { //Absorb
-					console.log("absorb: " + square.toString());
-					squares.splice(i, 1);
-					score++;
-					if (square instanceof ColorAlterSquare) {
-						colorAlterPlatform(square.color);
-						colorAlterSquares(square.color);
-					}
-				}
-				else if (sLeft >= platform.center && square.color === platform.rightColor) { //Absorb
-					console.log("absorb: " + square.toString());
-					squares.splice(i, 1);
-					score++;
-					if (square instanceof ColorAlterSquare) {
-						colorAlterPlatform(square.color);
-						colorAlterSquares(square.color);
-					}
-
-				}
-				else if (platform.leftColor === platform.rightColor && platform.leftColor === square.color) { //Absorb
-					console.log("absorb: " + square.toString());
-					squares.splice(i, 1);
-					score++;
-				}
-				else { //Bounce
-					console.log("bounce: " + square.toString());
-					if (square instanceof ColorAlterSquare) {
-						squares.splice(i, 1);
-						if (square.color === platform.leftColor) {
-							colorAlterPlatform(platform.leftColor);
-						}
-						else {
-							colorAlterPlatform(platform.rightColor);
-						}
-						colorAlterSquares(square.color);
-						continue;
-					}
-					else if (square instanceof CheckerboardSquare) {
-						squares.splice (i, 1);
-						checkerboardPlatform();
-					}
-
-					if (square.hasBounced && square.vy0 > -10) { //EXPLOOOOOOOODE!!!!!!!!
-						squares.splice(i, 1);
-						score -= 5;
-					}
-					timeFloor = Math.floor(sysTime - square.ty0 - 2);
-					if (!square.hasBounced)
-						square.vy0 += (square.a * timeFloor);
-					else {
-						timeUp = (-1 * square.vy0) / square.a
-						square.vy0 = square.a * (timeFloor - timeUp);
-					}
-					square.vy0 = Math.floor(square.vy0);
-					square.vy0 *= -1;
-					console.log("vy0 down: "  + square.vy0 + "\tty0 down: " + square.ty0 + "\t\nsystime: " + sysTime + "\ttimeUp: " + timeUp);
-					square.y0 = baseTop - square.sideLength / 2 - 1;
-					square.ty0 = sysTime;
-					square.hasBounced = true;
+		if (sLeft < baseRight && sRight > baseLeft && sBottom >= baseTop) {
+			if (platform.absorbed(square)) {
+				squares.splice(i, 1);
+				score++;
+				if (square instanceof ColorAlterSquare) {
+					console.log("Absorbed ColorAlterSquare");
+					colorAlterPlatform(square.color);
+					colorAlterSquares(square.color);
 				}
 			}
+			else {
+				if (square instanceof ColorAlterSquare) {
+					squares.splice(i, 1);
+					if (square.color === platform.leftColor) {
+						colorAlterPlatform(platform.rightColor);
+					}
+					else {
+						colorAlterPlatform(platform.leftColor);
+					}
+					colorAlterSquares(square.color);
+				}
+
+				if (square.hasBounced && square.vy0 > -10) { //EXPLOOOOOOOODE!!!!!!!!
+					console.log("explode");
+					squares.splice(i, 1);
+					score -= 5;
+				}
+
+				time = Math.floor(sysTime - square.ty0 - 2);
+				if (!square.hasBounced)
+					square.vy0 += (square.a * time);
+				else {
+					timeUp = (-1 * square.vy0) / square.a
+					square.vy0 = square.a * (time - timeUp);
+				}
+
+				square.vy0 = Math.floor(square.vy0) * -1;
+				square.y0 = baseTop - square.sideLength / 2 - 1;
+				square.ty0 = sysTime;
+				square.hasBounced = true;
+				console.log(square);
+			}
 		}
-		else if (sBottom >= canvas.height) { //Missed the platform
+		else if (sBottom >= canvas.height) {
+			console.log("miss");
 			squares.splice(i, 1);
 			misses--;
 		}
@@ -557,10 +578,20 @@ function checkBounces() {
 }
 
 function colorAlterPlatform(color) {
-	platform.type = 1;
-	platformAlterColor = color;
-	Platform.prototype.draw = colorAlterDraw;
-	colorAlterTimer = 5;
+	if (color === this.leftColor) {
+		console.log("Coloring all left");
+		platform.leftColorStarts = [platform.center - platform.width / 2];
+		platform.leftColorLengths = [platform.width];
+		platform.rightColorStarts = [];
+		platform.rightColorLengths = [];
+	} else {
+		console.log("Coloring all right");
+		platform.leftColorStarts = [];
+		platform.leftColorLengths = [];
+		platform.rightColorStarts = [platform.center - platform.width / 2];
+		platform.rightColorLengths = [platform.width];
+	}
+	effectTimer = 5;
 }
 
 function colorAlterSquares(color) {
@@ -571,8 +602,12 @@ function colorAlterSquares(color) {
 }
 
 function checkerboardPlatform() {
-	platform.type = 2;
-	Platform.prototype.draw = checkerboardDraw;
+	var left = platform.center - platform.width / 2;
+	platform.leftColorStarts = [left , left + 2 * platform.width / 6, left + 4 * platform.width / 6];
+	platform.leftColorLengths = [platform.width / 6, platform.width / 6, platform.width / 6];
+	platform.rightColorStarts = [left + platform.width / 6, left + 3 * platform.width / 6, left + 5 * platform.width / 6];
+	platform.rightColorLengths = [platform.width / 6, platform.width / 6, platform.width / 6];
+	effectTimer = 5;
 }
 
 /*
@@ -602,7 +637,7 @@ function drawThings () {
  */
 function onMouseDown(event) {
     movePillar = true;
-    offset = event.pageX - platform.center;
+    mouseDownLoc = event.pageX;
 }
 
 /*
@@ -618,10 +653,21 @@ function onMouseUp(event) {
 canvas.onmousemove = function (event) {
 	if (true === movePillar) {
 		clearThings();
-		platform.center = event.pageX - offset;
-		platform.x = platform.center - platform.width / 2;
+		var offset = event.pageX - mouseDownLoc;
+		mouseDownLoc = event.pageX;
+		platform.center += offset;
+		platform.x += offset;
+
+		for (var i = 0; i < platform.leftColorStarts.length; i++) {
+			platform.leftColorStarts[i] += offset;
+		}
+		
+		for (var i = 0; i < platform.rightColorStarts.length; i++) {
+			platform.rightColorStarts[i] += offset;
+		}
+
 		drawThings();
-		//console.log("center is " + center + ": purple (" + (center - canvas.width / 4) + "," + center + ") ; orange (" + center + "," + (center + canvas.width / 4) + ")");
+		//console.log("center is " + platform.center + ": purple (" + (platform.center - canvas.width / 4) + "," + platform + ") ; orange (" + platform.center + "," + (platform.center + canvas.width / 4) + ")");
 	}
 };
 
@@ -642,7 +688,7 @@ function begin(){
 	canvas.focus();
 
 	platform = new Platform(purple, orange, canvas.width / 2, canvas.height - 10, canvas.width / 2, 10);
-	squares = [new Square(leftColor, canvas.width / 3, 10)];
+	squares = [new ColorAlterSquare(leftColor, canvas.width / 3, 10)];
 	intervalId = setInterval(onTimer, timerDelay);
 }
 
