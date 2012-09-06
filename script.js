@@ -28,7 +28,7 @@ var levelUp = score + levelInterval;
 var levelText = "More Blocks!";
 var levelTextCtr = 0;
 var pingLevelUp = false;
-var misses = 10;
+var misses = 10; 
 var scoreText;
 var missesText;
 var fontHeight = 30;
@@ -380,12 +380,16 @@ function getGlowFactor(time) {
  * onTimer - called at regular intervals to clear, adjust, and redraw graphics
  */
 function onTimer() {
-	sysTime += .1;
+  if (misses === 0) { 
+    loseGame();
+    return;
+  };
+  sysTime += .1;
 	clearThings();
 	checkBounces();
 	moveSquares();
 	drawThings();
-
+  
 	//Increase frequency if score is high enough
 	if (score >= levelUp){
 		frequencyBound -= 0.02;
@@ -481,7 +485,6 @@ function clearText(){
 	var scoreWidth = ctx.measureText(scoreText).width;
 	var missesWidth = ctx.measureText(missesText).width;
 	var height = fontHeight;
-
 	ctx.clearRect(canvas.width - scoreWidth, 0, scoreWidth, height);
 	ctx.clearRect(canvas.width - missesWidth, height, missesWidth, height);
 
@@ -572,7 +575,7 @@ function checkBounces() {
 			console.log("miss");
 			squares.splice(i, 1);
 			misses--;
-		}
+    }
 	}
 }
 
@@ -621,6 +624,35 @@ function clearThings () {
 };
 
 /*
+ * loseGame - Tell the user that they lost the game
+ */
+function loseGame() {  
+  clearInterval(intervalId);
+  clearThings();
+  drawLoseScreen();
+};
+
+function drawLoseScreen() {
+  fontSize = 20 + Math.ceil(levelTextCtr/3);
+  ctx.font = (fontSize + "px Arial");
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgb(0, 128, 128, 0.6)";
+  scoreText = "Your Score: " + score;
+
+  ctx.fillText("YOU LOSE", canvas.width/2, canvas.height/2-100);
+  ctx.fillText(scoreText, canvas.width/2, canvas.height/2); 
+  ctx.fillText("Click to play again", canvas.width/2, canvas.height/2+100);
+};
+
+/*
+ * clearCanvas
+ */
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+};
+
+/*
  * drawThings - Wrapper function to call each draw function
  */
 function drawThings () {
@@ -635,6 +667,9 @@ function drawThings () {
  * onMouseDown - function to move center platform on mousedown
  */
 function onMouseDown(event) {
+    if (misses === 0) {
+      begin();
+    }
     movePillar = true;
     mouseDownLoc = event.pageX;
 }
@@ -650,7 +685,10 @@ function onMouseUp(event) {
  * bind onmousemove to function to move platform
  */
 canvas.onmousemove = function (event) {
-	if (true === movePillar) {
+  if (misses === 0) {
+    return; 
+  } 
+  if (true === movePillar) {
 		clearThings();
 		var offset = event.pageX - mouseDownLoc;
 		mouseDownLoc = event.pageX;
@@ -686,7 +724,13 @@ function Button(color, x, y, width, height, text){
 begin();
 
 function begin(){
-	canvas.addEventListener('mouseup', onMouseUp, false);
+  //Clear Screen
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  //Reset score and misses	
+  misses = 10;
+  score = 0; 
+  
+  canvas.addEventListener('mouseup', onMouseUp, false);
 	canvas.addEventListener('mousedown', onMouseDown, false);
 	canvas.addEventListener('keydown', onKeyPress, false);
 	canvas.setAttribute('tabindex', '0');
