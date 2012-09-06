@@ -558,12 +558,11 @@ canvas.onmousemove = function (event) {
 	}
 };
 
-// TODO: Get start to work neatly, write start screen
-function onKeyPress (event) {
-	if("s".charCodeAt(0) === event.keyCode){
-		console.log("S!!!");
-
-	}
+/*
+ * Everthing for start screen
+ */
+function Button(color, x, y, width, height, text){
+	
 }
 
 begin();
