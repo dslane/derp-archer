@@ -330,7 +330,7 @@ ColorAlterSquare.prototype.constructor = ColorAlterSquare;
 ColorAlterSquare.prototype.draw = function() {
 	var sLeft = this.x - this.sideLength / 2;
 	var sTop = this.y - this.sideLength / 2;
-	var innerColor = platform.leftColor;
+	var innerColor = this.color;
 
 	ctx.fillStyle = this.color;
 	ctx.fillRect(sLeft, sTop, this.sideLength, this.sideLength);
@@ -441,7 +441,7 @@ function onTimer() {
 			else {
 				color = platform.rightColor;
 			}
-			squares.push(new CheckerboardSquare(color, x0. size, undefined, undefined, x0, vx0));
+			squares.push(new CheckerboardSquare(color, x0, size, undefined, undefined, x0, vx0));
 		}
 	}
 }
@@ -548,6 +548,10 @@ function checkBounces() {
 						colorAlterPlatform(platform.leftColor);
 					}
 					colorAlterSquares(square.color);
+				} else if (square instanceof CheckerboardSquare) {
+					squares.splice(i, 1);
+					console.log("Bounced CheckerboardSquare")
+					checkerboardPlatform();
 				}
 
 				if (square.hasBounced && square.vy0 > -10) { //EXPLOOOOOOOODE!!!!!!!!
