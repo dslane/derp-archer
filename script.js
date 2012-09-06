@@ -5,6 +5,7 @@
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 var movePillar = false;
+var startScreen = true;
 var center = canvas.width / 2;
 var offset = 0;
 var sysTime = 0;
@@ -557,12 +558,27 @@ canvas.onmousemove = function (event) {
 	}
 };
 
-canvas.addEventListener('mouseup', onMouseUp, false);
-canvas.addEventListener('mousedown', onMouseDown, false);
+// TODO: Get start to work neatly, write start screen
+function onKeyPress (event) {
+	if("s".charCodeAt(0) === event.keyCode){
+		console.log("S!!!");
 
-platform = new Platform(purple, orange, canvas.width / 2, canvas.height - 10, canvas.width / 2, 10);
-squares = [new Square(leftColor, canvas.width / 3, 10)];
-intervalId = setInterval(onTimer, timerDelay);
+	}
+}
+
+begin();
+
+function begin(){
+	canvas.addEventListener('mouseup', onMouseUp, false);
+	canvas.addEventListener('mousedown', onMouseDown, false);
+	canvas.addEventListener('keydown', onKeyPress, false);
+	canvas.setAttribute('tabindex', '0');
+	canvas.focus();
+
+	platform = new Platform(purple, orange, canvas.width / 2, canvas.height - 10, canvas.width / 2, 10);
+	squares = [new Square(leftColor, canvas.width / 3, 10)];
+	intervalId = setInterval(onTimer, timerDelay);
+}
 
 //For addition to construction of squares for testing
 //, new Square(rightColor, 2 * canvas.width / 3, 10), new ColorAlterSquare(rightColor, Math.random() * canvas.width, 15)
