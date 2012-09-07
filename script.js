@@ -36,6 +36,8 @@ var fontHeight = 30;
 var effectTimer = 0;
 var squareAlterColor;
 
+//Global variable for starting game
+var startingGame = true;
 /*
  * Drawable - Prototype for drawable objects.  Contains color to be drawn,
  * coordinates, and dimensions.
@@ -667,7 +669,7 @@ function drawThings () {
  * onMouseDown - function to move center platform on mousedown
  */
 function onMouseDown(event) {
-    if (misses === 0) {
+    if (misses === 0 || startingGame) {
       begin();
     }
     movePillar = true;
@@ -723,13 +725,43 @@ function Button(color, x, y, width, height, text){
 
 begin();
 
+
+function drawLoseScreen() {
+  fontSize = 20 + Math.ceil(levelTextCtr/3);
+  ctx.font = (fontSize + "px Arial");
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgb(0, 128, 128, 0.6)";
+  scoreText = "Your Score: " + score;
+
+  ctx.fillText("YOU LOSE", canvas.width/2, canvas.height/2-100);
+  ctx.fillText(scoreText, canvas.width/2, canvas.height/2); 
+  ctx.fillText("Click to play again", canvas.width/2, canvas.height/2+100);
+};
+
+
+function drawStartScreen() {
+  fontSize = 20 + Math.ceil(levelTextCtr/3);
+  ctx.font = (fontSize + "px Arial");
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgb(0, 128, 128, 0.6)";
+
+  ctx.fillText("Welcome to block game", canvas.width/2, canvas.height/2-100);
+  ctx.fillText("Click to play", canvas.width/2, canvas.height/2+100);
+};
+
 function begin(){
+  if (startingGame) {
+    drawStartScreen();
+    startingGame = false; 
+  }
   //Clear Screen
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   //Reset score and misses	
   misses = 10;
   score = 0; 
-  
+   
   canvas.addEventListener('mouseup', onMouseUp, false);
 	canvas.addEventListener('mousedown', onMouseDown, false);
 	canvas.addEventListener('keydown', onKeyPress, false);
