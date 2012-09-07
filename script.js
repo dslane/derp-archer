@@ -93,6 +93,8 @@ Drawable.prototype.toString = function() {
 function Platform(leftColor, rightColor, center, y, width, height) {
 	Drawable.call(this, undefined, center - width / 2, y, width, height);
 
+	this.origWidth = width;
+
 	this.leftColor = leftColor;
 	this.rightColor = rightColor;
 	this.center = center;
@@ -107,6 +109,7 @@ Platform.prototype.leftColor = "black";
 Platform.prototype.rightColor = "black";
 
 Platform.prototype.restore = function() {
+	this.width = this.origWidth;
 	this.leftColorStarts = [this.center - this.width / 2];
 	this.leftColorLengths = [this.width / 2];
 	this.rightColorStarts = [this.center];
@@ -198,7 +201,7 @@ Platform.prototype.draw = function() {
  * clear - overrides clear function for Platform object; clears platform
  */
 Platform.prototype.clear = function() {
-	ctx.clearRect(this.x, this.y, this.width, this.height);
+	ctx.clearRect(this.center - this.width / 2 - 1, this.y - 1, this.width + 2, this.height + 2);
 	ctx.clearRect(this.center - 10, canvas.height - 15, 20, 5);
 }
 
@@ -372,19 +375,42 @@ CheckerboardSquare.prototype.draw = function() {
 	ctx.fillRect(sLeft + this.sideLength / 2, sTop + this.sideLength / 2, this.sideLength / 4, this.sideLength / 4);
 }
 
-function getGlowFactor(time) {
-	var cyclePoint = (time * 10) % 10; //Get's the tenth's digit
+/*
+ * part of a future we could not get working in time
+ *
+function ShrinkSquare(color, x, sideLength, y0, vy0, x0, vx0, a) {
+	Square.call(this, color, x, sideLength, y0, vy0, x0, vx0, a);
 }
+
+ShrinkSquare.prototype = new Square();
+ShrinkSquare.prototype.constructor = ShrinkSquare;
+
+ShrinkSquare.prototype.draw = function() {
+	var sLeft = this.x - this.sideLength / 2;
+	var sTop = this.y - this.sideLength / 2;
+	var innerColor = platform.leftColor;
+
+	ctx.fillStyle = this.color;
+	ctx.fillRect(sLeft, sTop, this.sideLength, this.sideLength);
+	
+	if (this.color === platform.leftColor)
+		innerColor = platform.rightColor;
+	ctx.fillStyle = innerColor;
+	ctx.fillRect(sLeft, sTop + 3 * this.sideLength / 8, this.sideLength, this.sideLength / 4);
+}
+*
+*/
+
 
 /*
  * onTimer - called at regular intervals to clear, adjust, and redraw graphics
  */
 function onTimer() {
-  if (misses === 0) { 
-    loseGame();
-    return;
-  };
-  sysTime += .1;
+	if (misses === 0) { 
+    	loseGame();
+    	return;
+  	};
+  	sysTime += .1;
 	clearThings();
 	checkBounces();
 	moveSquares();
@@ -401,6 +427,7 @@ function onTimer() {
 		effectTimer -= .1
 	} else if (effectTimer <= 0) {
 		platform.restore();
+		squareAlterColor = undefined;
 	}
 
 	//Generate squares
@@ -412,7 +439,7 @@ function onTimer() {
 		var x0 = Math.random() * canvas.width;
 		var vx0 = Math.random() * 30 - 5;
 
-		if (effectTimer > 0){
+		if (effectTimer > 0 && undefined != squareAlterColor){
 			squares.push(new Square(squareAlterColor, x0, size, undefined, undefined, x0, vx0));
 		}
 		else if ((1 <= num) && (8 >= num)){
@@ -550,9 +577,18 @@ function checkBounces() {
 					colorAlterSquares(square.color);
 				} else if (square instanceof CheckerboardSquare) {
 					squares.splice(i, 1);
-					console.log("Bounced CheckerboardSquare")
+					console.log("Bounced CheckerboardSquare");
 					checkerboardPlatform();
+				} /*
+				   * part of a future feature we could not implement correctly in time
+				   *
+				   else if (square instanceof ShrinkSquare) {
+					squares.splice(i, 1);
+					console.log("Bounced ShrinkSquare");
+					shrinkPlatform();
 				}
+				*
+				*/
 
 				if (square.hasBounced && square.vy0 > -10) { //EXPLOOOOOOOODE!!!!!!!!
 					console.log("explode");
@@ -616,6 +652,43 @@ function checkerboardPlatform() {
 	effectTimer = 5;
 }
 
+/* 
+ * future feature, could not get working correctly in time
+function shrinkPlatform() {
+	var left = platform.center - platform.width / 2;
+	platform.width = 0;
+	var numSectionPerSide = Math.floor((platform.leftColorStarts.length + platform.rightColorStarts.length) / 2);
+	var sectionNumber;
+	console.log(numSectionPerSide);
+	for (var i = 0; i < platform.leftColorStarts.length; i++) {
+		sectionNumber = i * 2;
+		if (platform.leftColorStarts[i] < platform.center) {
+			platform.leftColorStarts[i] += platform.leftColorLengths[i] * .25 * (numSectionPerSide - sectionNumber);
+		}
+		else if (platform.leftColorStarts[i] > platform.center){
+			platform.leftColorStarts[i] -= platform.leftColorLengths[i] * .25 * (sectionNumber - numSectionPerSide + 1);
+		}
+		platform.leftColorLengths[i] -= platform.leftColorLengths[i] * .25;
+		platform.width += platform.leftColorLengths[i];
+	}
+	
+	for (var i = 0; i < platform.rightColorStarts.length; i++) {
+		var sectionNumber = i * 2 + 1;
+		if (platform.rightColorStarts[i] < platform.center) {
+			platform.rightColorStarts[i] += platform.rightColorLengths[i] * .25 * (numSectionPerSide - sectionNumber);
+		}
+		else if (platform.rightColorStarts[i] > platform.center){
+			platform.rightColorStarts[i] -= platform.rightColorLengths[i] * .25 * (sectionNumber - numSectionPerSide + 1);
+		}
+		platform.rightColorLengths[i] -= platform.rightColorLengths[i] * .25;
+		platform.width += platform.rightColorLengths[i];
+	}
+
+	effectTimer = 5;
+}
+ *
+ */
+
 /*
  * clearThings - Wrapper function to call each clear function
  */
@@ -631,29 +704,29 @@ function clearThings () {
  * loseGame - Tell the user that they lost the game
  */
 function loseGame() {  
-  clearInterval(intervalId);
-  clearThings();
-  drawLoseScreen();
+  	clearInterval(intervalId);
+  	clearThings();
+  	drawLoseScreen();
 };
 
 function drawLoseScreen() {
-  fontSize = 20 + Math.ceil(levelTextCtr/3);
-  ctx.font = (fontSize + "px Arial");
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "rgb(0, 128, 128, 0.6)";
-  scoreText = "Your Score: " + score;
+	fontSize = 20 + Math.ceil(levelTextCtr/3);
+	ctx.font = (fontSize + "px Arial");
+	ctx.textAlign = "center";
+	ctx.textBaseline = "middle";
+	ctx.fillStyle = "rgb(0, 128, 128, 0.6)";
+	scoreText = "Your Score: " + score;
 
-  ctx.fillText("YOU LOSE", canvas.width/2, canvas.height/2-100);
-  ctx.fillText(scoreText, canvas.width/2, canvas.height/2); 
-  ctx.fillText("Click to play again", canvas.width/2, canvas.height/2+100);
+	ctx.fillText("YOU LOSE", canvas.width/2, canvas.height/2-100);
+	ctx.fillText(scoreText, canvas.width/2, canvas.height/2); 
+	ctx.fillText("Click to play again", canvas.width/2, canvas.height/2+100);
 };
 
 /*
  * clearCanvas
  */
 function clearCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  	ctx.clearRect(0, 0, canvas.width, canvas.height);
 };
 
 /*
@@ -672,7 +745,7 @@ function drawThings () {
  */
 function onMouseDown(event) {
     if (misses === 0) {
-      begin();
+      	begin();
     }
     movePillar = true;
     mouseDownLoc = event.pageX;
@@ -690,7 +763,7 @@ function onMouseUp(event) {
  */
 canvas.onmousemove = function (event) {
   if (misses === 0) {
-    return; 
+  	return; 
   } 
   if (true === movePillar) {
 		clearThings();
@@ -725,16 +798,55 @@ function Button(color, x, y, width, height, text){
 	
 }
 
+/*
+function testTimer() {
+	sysTime += .1;
+	clearThings();
+	checkBounces();
+	moveSquares();
+	drawThings();
+
+	var size = Math.random() * 30 + 10;
+	var x0 = Math.random() * canvas.width;
+	var vx0 = Math.random() * 30 - 5;
+	var color = platform.leftColor;
+  
+	//Increase frequency if score is high enough
+	if (score >= levelUp){
+		frequencyBound -= 0.02;
+		levelUp += levelInterval;
+		pingLevelUp = true;
+	}
+
+	if (effectTimer > 0) {
+		effectTimer -= .1
+	} else if (effectTimer <= 0) {
+		platform.restore();
+		squareAlterColor = undefined;
+	}
+
+	if (Math.floor(sysTime * 10) % 10 === 2)
+		squares.push(new ShrinkSquare(color, x0, size, undefined, undefined, x0, vx0));
+	else if ((sysTime * 10) % 10 === 4)
+		squares.push(new CheckerboardSquare(color, x0, size, undefined, undefined, x0, vx0));
+	else if ((sysTime * 10) % 10 === 6)
+		squares.push(new ShrinkSquare(color, x0, size, undefined, undefined, x0, vx0));
+	else if (Math.floor(sysTime * 10) % 10 === 8)
+		squares.push(new CheckerboardSquare(color, x0, size, undefined, undefined, x0, vx0));
+}
+*/
+
+
 begin();
 
 function begin(){
-  //Clear Screen
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  //Reset score and misses	
-  misses = 10;
-  score = 0; 
+  	//Clear Screen
+  	ctx.clearRect(0, 0, canvas.width, canvas.height);
+  	//Reset score and misses	
+  	misses = 10;
+  	score = 0; 
   
-  canvas.addEventListener('mouseup', onMouseUp, false);
+  	canvas.addEventListener('mouseup', onMouseUp, false);
 	canvas.addEventListener('mousedown', onMouseDown, false);
 	canvas.addEventListener('keydown', onKeyPress, false);
 	canvas.setAttribute('tabindex', '0');
@@ -743,6 +855,7 @@ function begin(){
 	platform = new Platform(purple, orange, canvas.width / 2, canvas.height - 10, canvas.width / 2, 10);
 	squares = [new Square(leftColor, canvas.width / 3, 10)];
 	intervalId = setInterval(onTimer, timerDelay);
+	//intervalId = setInterval(testTimer, timerDelay);
 }
 
 //For addition to construction of squares for testing
